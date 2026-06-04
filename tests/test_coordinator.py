@@ -41,8 +41,9 @@ async def test_real_data_coordinator_first_refresh_populates_data(
     client.async_get_plant_data = AsyncMock(return_value=mock_plant_data)
 
     coord = HoymilesRealDataCoordinator(hass, client)
-    await coord.async_config_entry_first_refresh()
+    await coord.async_refresh()
 
+    assert coord.last_update_success is True
     assert coord.data is mock_plant_data
     client.async_get_plant_data.assert_awaited_once()
 
@@ -73,8 +74,8 @@ async def test_real_data_and_metadata_share_one_client(
     real = HoymilesRealDataCoordinator(hass, client)
     meta = HoymilesMetadataCoordinator(hass, client)
 
-    await real.async_config_entry_first_refresh()
-    await meta.async_config_entry_first_refresh()
+    await real.async_refresh()
+    await meta.async_refresh()
 
     # Same underlying client object — proves the FC3 sharing contract.
     assert real._client is meta._client is client

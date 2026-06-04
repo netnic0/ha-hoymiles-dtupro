@@ -100,13 +100,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-          cache: pip
-          cache-dependency-path: pyproject.toml
+          # No pip cache here — pytest-homeassistant-custom-component drags in
+          # the entire HA core stack and we want a clean slate per run to avoid
+          # editable-install path-hook ghosts from older package layouts.
 
       - name: Install dev dependencies (incl. pytest-homeassistant-custom-component)
+        # Non-editable install on purpose: an editable install creates a
+        # `__editable__.*.finder.__path_hook__` shim that HA's custom-component
+        # loader trips on while scanning sys.path during bootstrap.
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          pip install ".[dev]"
 
       # HA-native tests exercise config_flow + coordinator + setup/unload via the
       # real Home Assistant core fixtures (hass, enable_custom_integrations).

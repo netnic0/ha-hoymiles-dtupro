@@ -17,7 +17,9 @@ if TYPE_CHECKING:
 
 
 # Patch target for the API client used inside async_setup_entry.
-_CLIENT_PATH = "custom_components.hoymiles_dtupro.HoymilesAsyncClient"
+# The lazy import pattern means HoymilesAsyncClient lives at module path .api,
+# not at the integration package root.
+_CLIENT_PATH = "custom_components.hoymiles_dtupro.api.HoymilesAsyncClient"
 
 
 @pytest.mark.asyncio
