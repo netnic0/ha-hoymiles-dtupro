@@ -117,4 +117,4 @@ jobs:
       # Coverage floor is intentionally lower than the pure-api 80%: the HA layer
       # is glue code; behaviour quality lives in the pure api package's tests.
       - name: pytest HA-native with coverage
-        run: pytest tests/test_config_flow.py tests/test_coordinator.py tests/test_init.py --cov=custom_components.hoymiles_dtupro --cov-report=term-missing --cov-fail-under=60
+        run: pytest tests/test_config_flow.py tests/test_coordinator.py tests/test_init.py tests/test_sensor.py tests/test_binary_sensor.py tests/test_diagnostics.py --cov=custom_components.hoymiles_dtupro --cov-report=term-missing --cov-fail-under=60
