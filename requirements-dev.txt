@@ -6,6 +6,7 @@ pymodbus[serial]>=3.6,<4.0
 pytest>=8.0
 pytest-asyncio>=0.23
 pytest-cov>=5.0
+pytest-homeassistant-custom-component==0.13.316
 ruff>=0.6
 mypy>=1.10
 pre-commit>=3.7

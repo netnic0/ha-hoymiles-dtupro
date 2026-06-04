@@ -58,13 +58,13 @@ jobs:
         run: mypy ha_hoymiles_dtupro
 
   test:
-    name: Test (Python ${{ matrix.python-version }})
+    name: Test pure-lib (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     needs: lint
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -78,10 +78,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      # Coverage is scoped to ha_hoymiles_dtupro/ — see [tool.coverage.run]
-      # in pyproject.toml. The HA layer is at 0% offline and that is expected.
-      - name: pytest with coverage
-        run: pytest --cov=ha_hoymiles_dtupro --cov-report=term-missing --cov-report=xml
+      # Coverage scoped to the pure library — see [tool.coverage.run].
+      # HA-native tests live in the test-ha job and use a separate coverage scope.
+      - name: pytest pure-lib with coverage
+        run: pytest tests/test_client.py tests/test_decoder.py tests/test_exceptions.py tests/test_models.py --cov=ha_hoymiles_dtupro --cov-report=term-missing --cov-report=xml --cov-fail-under=80
 
       - name: Upload coverage artifact
         if: matrix.python-version == '3.13'
