@@ -1,14 +1,22 @@
 {
   "domain": "hoymiles_dtupro",
   "name": "Hoymiles DTU-Pro",
-  "codeowners": ["@netnic0"],
+  "codeowners": [
+    "@netnic0"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/netnic0/ha-hoymiles-dtupro",
   "integration_type": "device",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/netnic0/ha-hoymiles-dtupro/issues",
-  "loggers": ["custom_components.hoymiles_dtupro", "ha_hoymiles_dtupro", "pymodbus"],
+  "loggers": [
+    "custom_components.hoymiles_dtupro",
+    "ha_hoymiles_dtupro",
+    "pymodbus"
+  ],
   "quality_scale": "bronze",
-  "requirements": ["pymodbus>=3.6,<4.0"],
-  "version": "0.1.0-alpha.1"
+  "requirements": [
+    "pymodbus>=3.6,<4.0"
+  ],
+  "version": "0.1.1-alpha.1"
 }
