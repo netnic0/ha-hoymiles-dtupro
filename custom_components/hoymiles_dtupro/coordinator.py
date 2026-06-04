@@ -15,6 +15,11 @@ import logging
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
+from homeassistant.helpers.update_coordinator import (
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
+
 from ha_hoymiles_dtupro import HoymilesAsyncClient, HoymilesError, PlantData
 
 from .const import (
@@ -22,34 +27,13 @@ from .const import (
     DEFAULT_SCAN_INTERVAL_REAL_DATA,
 )
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
-    from homeassistant.helpers.update_coordinator import (
-        DataUpdateCoordinator,
-        UpdateFailed,
-    )
 
 _LOGGER = logging.getLogger(__name__)
 
 
-# Importing HA at module level breaks the PoC's offline tests, so we defer
-# to a runtime guard. In production HA always provides these symbols.
-try:  # pragma: no cover - exercised only inside HA
-    from homeassistant.helpers.update_coordinator import (
-        DataUpdateCoordinator,
-        UpdateFailed,
-    )
-
-    _HAS_HA = True
-except ImportError:  # pragma: no cover - PoC offline path
-    _HAS_HA = False
-    DataUpdateCoordinator = object  # type: ignore[assignment,misc]
-
-    class UpdateFailed(Exception):  # type: ignore[no-redef]  # noqa: N818
-        """Stub used only when running tests outside HA. Name mirrors HA's class."""
-
-
-class HoymilesRealDataCoordinator(DataUpdateCoordinator[PlantData]):  # type: ignore[type-arg,misc]
+class HoymilesRealDataCoordinator(DataUpdateCoordinator[PlantData]):
     """Polls live data (PV power, voltages, temperature) at short interval."""
 
     def __init__(
@@ -58,8 +42,6 @@ class HoymilesRealDataCoordinator(DataUpdateCoordinator[PlantData]):  # type: ig
         client: HoymilesAsyncClient,
         update_interval: timedelta = DEFAULT_SCAN_INTERVAL_REAL_DATA,
     ) -> None:
-        if not _HAS_HA:  # pragma: no cover - defensive
-            raise RuntimeError("HoymilesRealDataCoordinator requires Home Assistant runtime")
         super().__init__(
             hass,
             _LOGGER,
@@ -76,7 +58,7 @@ class HoymilesRealDataCoordinator(DataUpdateCoordinator[PlantData]):  # type: ig
             raise UpdateFailed(f"Hoymiles real-data fetch failed: {err}") from err
 
 
-class HoymilesMetadataCoordinator(DataUpdateCoordinator[PlantData]):  # type: ignore[type-arg,misc]
+class HoymilesMetadataCoordinator(DataUpdateCoordinator[PlantData]):
     """Polls slow-changing data (link_status, alarm_count) at long interval.
 
     Currently fetches the same `PlantData` payload as the real-data coordinator
@@ -92,8 +74,6 @@ class HoymilesMetadataCoordinator(DataUpdateCoordinator[PlantData]):  # type: ig
         client: HoymilesAsyncClient,
         update_interval: timedelta = DEFAULT_SCAN_INTERVAL_METADATA,
     ) -> None:
-        if not _HAS_HA:  # pragma: no cover - defensive
-            raise RuntimeError("HoymilesMetadataCoordinator requires Home Assistant runtime")
         super().__init__(
             hass,
             _LOGGER,

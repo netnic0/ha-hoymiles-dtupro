@@ -8,24 +8,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from homeassistant.components.diagnostics import async_redact_data
+
 from ha_hoymiles_dtupro import PlantData
 
 from .const import DOMAIN
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
-
-
-try:  # pragma: no cover
-    from homeassistant.components.diagnostics import async_redact_data
-
-    _HAS_HA = True
-except ImportError:  # pragma: no cover
-    _HAS_HA = False
-
-    def async_redact_data(data: dict, _to_redact: set) -> dict:
-        return data
 
 
 REDACT_KEYS: set[str] = {"host", "serial_number", "dtu_serial"}

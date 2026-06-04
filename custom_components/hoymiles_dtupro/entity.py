@@ -10,30 +10,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
 from ha_hoymiles_dtupro import PlantData
 
 from .const import DOMAIN
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from .coordinator import (
         HoymilesMetadataCoordinator,
         HoymilesRealDataCoordinator,
     )
 
 
-# Defer HA imports for PoC offline path.
-try:  # pragma: no cover
-    from homeassistant.helpers.device_registry import DeviceInfo
-    from homeassistant.helpers.update_coordinator import CoordinatorEntity
-
-    _HAS_HA = True
-except ImportError:  # pragma: no cover
-    _HAS_HA = False
-    CoordinatorEntity = object  # type: ignore[assignment,misc]
-    DeviceInfo = dict  # type: ignore[assignment,misc]
-
-
-class HoymilesPlantEntity(CoordinatorEntity[PlantData]):  # type: ignore[type-arg,misc]
+class HoymilesPlantEntity(CoordinatorEntity[PlantData]):
     """An entity attached to the DTU device itself (whole plant aggregates)."""
 
     _attr_has_entity_name = True
@@ -55,7 +46,7 @@ class HoymilesPlantEntity(CoordinatorEntity[PlantData]):  # type: ignore[type-ar
         )
 
 
-class HoymilesInverterEntity(CoordinatorEntity[PlantData]):  # type: ignore[type-arg,misc]
+class HoymilesInverterEntity(CoordinatorEntity[PlantData]):
     """An entity attached to a single inverter, parented to the DTU."""
 
     _attr_has_entity_name = True
