@@ -160,7 +160,7 @@ class HoymilesAsyncClient:
             response = await client.read_holding_registers(
                 address=address,
                 count=count,
-                slave=self._unit_id,
+                device_id=self._unit_id,
             )
         except TimeoutError as err:
             raise HoymilesTimeoutError(
