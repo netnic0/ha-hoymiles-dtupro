@@ -1,0 +1,7 @@
+{
+  "name": "Hoymiles DTU-Pro",
+  "render_readme": true,
+  "homeassistant": "2024.1.0",
+  "country": ["FR", "DE", "ES", "GB", "US"],
+  "zip_release": false
+}
