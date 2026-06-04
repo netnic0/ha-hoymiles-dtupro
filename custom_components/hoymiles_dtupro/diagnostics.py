@@ -54,9 +54,12 @@ async def async_get_config_entry_diagnostics(
     real_coord = bundle["real_data"]
     metadata_coord = bundle["metadata"]
 
+    # The entry title bakes the DTU serial ("Hoymiles DTU-Pro (<SN>)") for UX,
+    # so emit a generic title in diagnostics rather than the live one — otherwise
+    # the SN leaks despite REDACT_KEYS covering the structured fields.
     payload = {
         "config_entry": {
-            "title": entry.title,
+            "title": "Hoymiles DTU-Pro",
             "data": dict(entry.data),
             "version": entry.version,
         },
