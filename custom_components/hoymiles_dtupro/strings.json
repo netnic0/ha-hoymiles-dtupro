@@ -1,0 +1,76 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Hoymiles DTU-Pro",
+        "description": "Establish a Modbus TCP connection to your DTU-Pro. The DTU's serial number will be used as the unique device ID.",
+        "data": {
+          "host": "Host or IP address",
+          "port": "Modbus TCP port",
+          "unit_id": "Modbus unit ID",
+          "scan_interval_real_data": "Live data scan interval (seconds)"
+        },
+        "data_description": {
+          "host": "Local IP of the DTU-Pro (e.g. 192.0.2.1).",
+          "port": "Default Modbus TCP port is 502.",
+          "unit_id": "Modbus slave ID. Default is 1; change only if you know what you're doing.",
+          "scan_interval_real_data": "How often to fetch live power/voltage/current data. Minimum 10 seconds to avoid stressing the DTU."
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Hoymiles DTU-Pro",
+        "description": "Update connection details. The DTU serial must match the one originally configured.",
+        "data": {
+          "host": "Host or IP address",
+          "port": "Modbus TCP port",
+          "unit_id": "Modbus unit ID",
+          "scan_interval_real_data": "Live data scan interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to reach the DTU. Check the host, port and network.",
+      "invalid_host": "Invalid hostname or IP address.",
+      "unknown": "Unexpected error. Check the logs."
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "another_device": "A different DTU is responding at this host. Configuration aborted to avoid mixing devices.",
+      "reconfigure_successful": "Reconfiguration successful."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "pv_power": { "name": "PV power" },
+      "today_production": { "name": "Today's production" },
+      "total_production": { "name": "Total production" },
+      "temperature": { "name": "Temperature" },
+      "grid_voltage": { "name": "Grid voltage" },
+      "grid_frequency": { "name": "Grid frequency" },
+      "pv_voltage": { "name": "PV voltage" },
+      "pv_current": { "name": "PV current" },
+      "alarm_code": { "name": "Alarm code" },
+      "alarm_count": { "name": "Alarm count" }
+    },
+    "binary_sensor": {
+      "alarm": { "name": "Alarm" },
+      "link": { "name": "Link" }
+    }
+  },
+  "services": {
+    "set_inverter_limit": {
+      "name": "Set inverter limit",
+      "description": "Sets the persistent maximum AC output power for a specific Hoymiles inverter.",
+      "fields": {
+        "inverter_serial": {
+          "name": "Inverter serial number",
+          "description": "12-character hexadecimal serial of the target inverter."
+        },
+        "limit_w": {
+          "name": "Limit (W)",
+          "description": "Maximum AC output power in watts."
+        }
+      }
+    }
+  }
+}

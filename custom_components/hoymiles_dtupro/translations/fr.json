@@ -1,0 +1,76 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connexion au DTU-Pro Hoymiles",
+        "description": "Établir une connexion Modbus TCP avec votre DTU-Pro. Le numéro de série du DTU sera utilisé comme identifiant unique de l'appareil.",
+        "data": {
+          "host": "Hôte ou adresse IP",
+          "port": "Port Modbus TCP",
+          "unit_id": "Identifiant Modbus (unit ID)",
+          "scan_interval_real_data": "Intervalle de scan des données en temps réel (secondes)"
+        },
+        "data_description": {
+          "host": "Adresse IP locale du DTU-Pro (ex. 192.0.2.1).",
+          "port": "Le port Modbus TCP par défaut est 502.",
+          "unit_id": "ID esclave Modbus. Par défaut 1 ; ne modifier qu'en connaissance de cause.",
+          "scan_interval_real_data": "Fréquence de récupération des données en temps réel (puissance/tension/courant). Minimum 10 secondes afin de ne pas surcharger le DTU."
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigurer le DTU-Pro Hoymiles",
+        "description": "Mettre à jour les paramètres de connexion. Le numéro de série du DTU doit correspondre à celui configuré initialement.",
+        "data": {
+          "host": "Hôte ou adresse IP",
+          "port": "Port Modbus TCP",
+          "unit_id": "Identifiant Modbus (unit ID)",
+          "scan_interval_real_data": "Intervalle de scan des données en temps réel (secondes)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de joindre le DTU. Vérifiez l'hôte, le port et le réseau.",
+      "invalid_host": "Nom d'hôte ou adresse IP invalide.",
+      "unknown": "Erreur inattendue. Consultez les journaux."
+    },
+    "abort": {
+      "already_configured": "L'appareil est déjà configuré.",
+      "another_device": "Un autre DTU répond à cette adresse. Configuration annulée pour éviter tout mélange d'appareils.",
+      "reconfigure_successful": "Reconfiguration réussie."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "pv_power": { "name": "Puissance PV" },
+      "today_production": { "name": "Production du jour" },
+      "total_production": { "name": "Production totale" },
+      "temperature": { "name": "Température" },
+      "grid_voltage": { "name": "Tension réseau" },
+      "grid_frequency": { "name": "Fréquence réseau" },
+      "pv_voltage": { "name": "Tension PV" },
+      "pv_current": { "name": "Courant PV" },
+      "alarm_code": { "name": "Code d'alarme" },
+      "alarm_count": { "name": "Nombre d'alarmes" }
+    },
+    "binary_sensor": {
+      "alarm": { "name": "Alarme" },
+      "link": { "name": "Liaison" }
+    }
+  },
+  "services": {
+    "set_inverter_limit": {
+      "name": "Définir la limite de puissance de l'onduleur",
+      "description": "Définit la puissance AC maximale persistante pour un onduleur Hoymiles spécifique.",
+      "fields": {
+        "inverter_serial": {
+          "name": "Numéro de série de l'onduleur",
+          "description": "Numéro de série hexadécimal sur 12 caractères de l'onduleur cible."
+        },
+        "limit_w": {
+          "name": "Limite (W)",
+          "description": "Puissance AC maximale en watts."
+        }
+      }
+    }
+  }
+}

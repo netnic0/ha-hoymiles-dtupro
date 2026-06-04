@@ -1,0 +1,76 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Conectar con Hoymiles DTU-Pro",
+        "description": "Establece una conexión Modbus TCP con tu DTU-Pro. El número de serie del DTU se usará como identificador único del dispositivo.",
+        "data": {
+          "host": "Host o dirección IP",
+          "port": "Puerto Modbus TCP",
+          "unit_id": "Identificador Modbus (unit ID)",
+          "scan_interval_real_data": "Intervalo de sondeo de datos en vivo (segundos)"
+        },
+        "data_description": {
+          "host": "IP local del DTU-Pro (p. ej. 192.0.2.1).",
+          "port": "El puerto Modbus TCP por defecto es 502.",
+          "unit_id": "ID de esclavo Modbus. Por defecto 1; cámbialo solo si sabes lo que haces.",
+          "scan_interval_real_data": "Frecuencia con la que se obtienen los datos en vivo (potencia/tensión/corriente). Mínimo 10 segundos para no sobrecargar el DTU."
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigurar Hoymiles DTU-Pro",
+        "description": "Actualiza los parámetros de conexión. El número de serie del DTU debe coincidir con el configurado originalmente.",
+        "data": {
+          "host": "Host o dirección IP",
+          "port": "Puerto Modbus TCP",
+          "unit_id": "Identificador Modbus (unit ID)",
+          "scan_interval_real_data": "Intervalo de sondeo de datos en vivo (segundos)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No se puede contactar con el DTU. Comprueba el host, el puerto y la red.",
+      "invalid_host": "Nombre de host o dirección IP no válidos.",
+      "unknown": "Error inesperado. Consulta los registros."
+    },
+    "abort": {
+      "already_configured": "El dispositivo ya está configurado.",
+      "another_device": "En esta dirección responde un DTU distinto. Se ha cancelado la configuración para evitar mezclar dispositivos.",
+      "reconfigure_successful": "Reconfiguración correcta."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "pv_power": { "name": "Potencia FV" },
+      "today_production": { "name": "Producción de hoy" },
+      "total_production": { "name": "Producción total" },
+      "temperature": { "name": "Temperatura" },
+      "grid_voltage": { "name": "Tensión de red" },
+      "grid_frequency": { "name": "Frecuencia de red" },
+      "pv_voltage": { "name": "Tensión FV" },
+      "pv_current": { "name": "Corriente FV" },
+      "alarm_code": { "name": "Código de alarma" },
+      "alarm_count": { "name": "Recuento de alarmas" }
+    },
+    "binary_sensor": {
+      "alarm": { "name": "Alarma" },
+      "link": { "name": "Enlace" }
+    }
+  },
+  "services": {
+    "set_inverter_limit": {
+      "name": "Establecer límite del inversor",
+      "description": "Define la potencia de salida CA máxima persistente para un inversor Hoymiles concreto.",
+      "fields": {
+        "inverter_serial": {
+          "name": "Número de serie del inversor",
+          "description": "Número de serie hexadecimal de 12 caracteres del inversor objetivo."
+        },
+        "limit_w": {
+          "name": "Límite (W)",
+          "description": "Potencia de salida CA máxima en vatios."
+        }
+      }
+    }
+  }
+}

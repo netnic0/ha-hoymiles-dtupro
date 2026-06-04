@@ -1,0 +1,25 @@
+set_inverter_limit:
+  name: Set inverter limit
+  description: >-
+    Sets the persistent maximum AC output power for a specific Hoymiles inverter
+    (writes to the `limit_persistent` Modbus register). Skeleton — actual register
+    write is part of M2.
+  fields:
+    inverter_serial:
+      name: Inverter serial number
+      description: 12-character hexadecimal serial of the target inverter (e.g. 1144000000A1).
+      required: true
+      example: "1144000000A1"
+      selector:
+        text: {}
+    limit_w:
+      name: Limit (W)
+      description: Maximum AC output power in watts. The DTU clamps to a per-model maximum.
+      required: true
+      example: 800
+      selector:
+        number:
+          min: 0
+          max: 2000
+          unit_of_measurement: W
+          mode: box
