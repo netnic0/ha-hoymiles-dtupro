@@ -1,0 +1,100 @@
+name: Bug report
+description: Report a problem with the Hoymiles DTU-Pro integration
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Please fill in as
+        much detail as you can — it makes triage dramatically faster.
+
+  - type: input
+    id: ha-version
+    attributes:
+      label: Home Assistant version
+      description: Settings → About in HA UI.
+      placeholder: "2026.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: integration-version
+    attributes:
+      label: Integration version
+      description: Visible in HACS or in `custom_components/hoymiles_dtupro/manifest.json`.
+      placeholder: "0.1.0-alpha.1"
+    validations:
+      required: true
+
+  - type: input
+    id: dtu-firmware
+    attributes:
+      label: DTU-Pro firmware version
+      description: Visible in the DTU web UI → About.
+      placeholder: "V00.07.04"
+    validations:
+      required: true
+
+  - type: input
+    id: inverter-model
+    attributes:
+      label: Inverter model(s)
+      description: e.g. HMS-1000-2T, HMS-2000-4T, HM-1500.
+      placeholder: "HMS-1000-2T × 7"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear and concise description of the problem.
+      placeholder: "After updating to 0.1.0-alpha.1, the integration fails to load with..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: |
+        Paste the relevant lines from `home-assistant.log`. Enable debug logging
+        first by adding to `configuration.yaml`:
+        ```yaml
+        logger:
+          default: warning
+          logs:
+            custom_components.hoymiles_dtupro: debug
+            ha_hoymiles_dtupro: debug
+        ```
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics download
+      description: |
+        Optional but helpful — Settings → Devices → Hoymiles DTU-Pro → ⋮ → Download diagnostics.
+        Paste the JSON or attach the file.
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Any additional context — does ArekKubacki's integration work on the same hardware? Did this start after a HA upgrade?
+    validations:
+      required: false

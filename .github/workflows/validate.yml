@@ -1,0 +1,32 @@
+name: Validate (HACS + hassfest)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly safety net to catch HACS / hassfest validator changes upstream.
+    - cron: "37 4 * * 1"
+  workflow_dispatch:
+
+jobs:
+  hassfest:
+    name: hassfest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    name: HACS validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hacs/action@main
+        with:
+          category: integration
+          # Brand assets are submitted to home-assistant/brands separately,
+          # at milestone M3. Until then HACS will warn — that is expected and
+          # is not a CI blocker for custom repositories.
+          ignore: brands

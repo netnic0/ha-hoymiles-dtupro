@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest a new feature or improvement
+title: "[Feat]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: |
+        A clear description of the use case. "I want X to be able to Y" is more
+        useful than "Add support for X". Helps prioritise.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How would you like the integration to behave? Mock-ups, sample
+        configurations, or links to similar implementations elsewhere are very
+        welcome.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you thought about and why you rejected them.
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Hardware specifics, related issues, references to upstream
+        documentation, etc.
+    validations:
+      required: false

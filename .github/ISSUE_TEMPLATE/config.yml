@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Home Assistant community forum
+    url: https://community.home-assistant.io/
+    about: General Home Assistant questions are best asked in the community forum.
+  - name: HACS documentation
+    url: https://hacs.xyz/docs/use/
+    about: Questions about how to install or update HACS itself.
