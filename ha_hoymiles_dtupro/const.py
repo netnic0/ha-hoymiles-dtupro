@@ -87,13 +87,13 @@ assert struct.calcsize(INVERTER_FMT) == INVERTER_PAYLOAD_BYTES, (
 )
 
 # ─── Scale factors (decode integer registers into engineering units) ──────────
-SCALE_PV_VOLTAGE: Final[float] = 0.1       # V
-SCALE_PV_CURRENT_HM: Final[float] = 0.01   # A (HM/HMS series, SN starts with "11")
-SCALE_PV_CURRENT_MI: Final[float] = 0.01   # A (MI series, SN starts with "10")
-SCALE_GRID_VOLTAGE: Final[float] = 0.1     # V
+SCALE_PV_VOLTAGE: Final[float] = 0.1  # V
+SCALE_PV_CURRENT_HM: Final[float] = 0.01  # A (HM/HMS series, SN starts with "11")
+SCALE_PV_CURRENT_MI: Final[float] = 0.01  # A (MI series, SN starts with "10")
+SCALE_GRID_VOLTAGE: Final[float] = 0.1  # V
 SCALE_GRID_FREQUENCY: Final[float] = 0.01  # Hz
-SCALE_PV_POWER: Final[float] = 0.1         # W
-SCALE_TEMPERATURE: Final[float] = 0.1      # °C (signed)
+SCALE_PV_POWER: Final[float] = 0.1  # W
+SCALE_TEMPERATURE: Final[float] = 0.1  # °C (signed)
 
 # ─── Inverter-series prefix discriminator (first 2 chars of serial) ───────────
 SERIES_PREFIX_MI: Final[str] = "10"

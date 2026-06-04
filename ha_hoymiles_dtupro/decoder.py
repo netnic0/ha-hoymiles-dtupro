@@ -77,13 +77,19 @@ def decode_inverter_payload(raw: bytes) -> InverterReading:
         pv_p_raw,
         today_wh,
         total_wh,
-        temp_raw,        # int16 signed
+        temp_raw,  # int16 signed
         operating_status,
         alarm_code,
         alarm_count,
         link_status_byte,
         # 7 bytes of reserved padding
-        _r0, _r1, _r2, _r3, _r4, _r5, _r6,
+        _r0,
+        _r1,
+        _r2,
+        _r3,
+        _r4,
+        _r5,
+        _r6,
     ) = unpacked
 
     serial = serial_raw.hex().upper()

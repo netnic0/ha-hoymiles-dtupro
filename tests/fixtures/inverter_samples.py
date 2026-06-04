@@ -12,7 +12,7 @@ from typing import Final
 from ha_hoymiles_dtupro.const import INVERTER_FMT, NULL_INVERTER_SERIAL
 
 
-def build_inverter_payload(  # noqa: PLR0913 -- builder helper
+def build_inverter_payload(
     *,
     serial_hex: str = "1144000000A1",
     port_number: int = 1,
@@ -52,7 +52,13 @@ def build_inverter_payload(  # noqa: PLR0913 -- builder helper
         alarm_code,
         alarm_count,
         link_status,
-        0, 0, 0, 0, 0, 0, 0,  # 7 reserved bytes
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,  # 7 reserved bytes
     )
 
 

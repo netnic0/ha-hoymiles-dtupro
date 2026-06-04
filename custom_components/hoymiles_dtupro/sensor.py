@@ -15,8 +15,6 @@ from .const import DOMAIN
 from .entity import HoymilesInverterEntity, HoymilesPlantEntity
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Callable
-
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -86,14 +84,15 @@ if _HAS_HA:  # pragma: no cover
         ),
     )
 
-
     class HoymilesPlantSensor(HoymilesPlantEntity, SensorEntity):  # type: ignore[misc]
         """A plant-level numeric sensor (pv_power, today_production, ...)."""
 
         entity_description: SensorEntityDescription
 
         def __init__(self, coordinator, description: SensorEntityDescription) -> None:
-            super().__init__(coordinator, translation_key=description.translation_key or description.key)
+            super().__init__(
+                coordinator, translation_key=description.translation_key or description.key
+            )
             self.entity_description = description
 
         @property
@@ -101,13 +100,14 @@ if _HAS_HA:  # pragma: no cover
             data: PlantData = self.coordinator.data
             return getattr(data, self.entity_description.key, None)
 
-
     class HoymilesInverterSensor(HoymilesInverterEntity, SensorEntity):  # type: ignore[misc]
         """A per-inverter numeric sensor."""
 
         entity_description: SensorEntityDescription
 
-        def __init__(self, coordinator, inverter_serial: str, description: SensorEntityDescription) -> None:
+        def __init__(
+            self, coordinator, inverter_serial: str, description: SensorEntityDescription
+        ) -> None:
             super().__init__(
                 coordinator,
                 inverter_serial,
@@ -123,7 +123,6 @@ if _HAS_HA:  # pragma: no cover
                     return getattr(inv, self.entity_description.key, None)
             return None
 
-
     async def async_setup_entry(
         hass: HomeAssistant,
         entry: ConfigEntry,
@@ -135,9 +134,7 @@ if _HAS_HA:  # pragma: no cover
         plant: PlantData = real_coord.data
 
         entities: list[SensorEntity] = []
-        entities.extend(
-            HoymilesPlantSensor(real_coord, desc) for desc in PLANT_SENSORS
-        )
+        entities.extend(HoymilesPlantSensor(real_coord, desc) for desc in PLANT_SENSORS)
         for inverter in plant.inverters:
             entities.extend(
                 HoymilesInverterSensor(real_coord, inverter.serial_number, desc)

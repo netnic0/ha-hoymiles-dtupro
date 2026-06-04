@@ -79,7 +79,8 @@ class TestInverterReading:
 
     def test_frozen_dataclass_is_immutable(self) -> None:
         reading = _make_reading()
-        with pytest.raises(Exception):  # FrozenInstanceError or AttributeError
+        # FrozenInstanceError is a subclass of AttributeError; either is acceptable.
+        with pytest.raises(AttributeError):
             reading.pv_power = 999.0  # type: ignore[misc]
 
     def test_series_property_uses_serial_prefix(self) -> None:
@@ -110,12 +111,20 @@ class TestPlantData:
         assert plant.inverter_count == 0
 
     def test_aggregations_skip_offline_inverters(self) -> None:
-        online = _make_reading(serial_number="1144000000A1", pv_power=300.0,
-                               today_production=1000, total_production=50000,
-                               link_status=True)
-        offline = _make_reading(serial_number="1144000000A2", pv_power=999.0,
-                                today_production=9999, total_production=999_999,
-                                link_status=False)
+        online = _make_reading(
+            serial_number="1144000000A1",
+            pv_power=300.0,
+            today_production=1000,
+            total_production=50000,
+            link_status=True,
+        )
+        offline = _make_reading(
+            serial_number="1144000000A2",
+            pv_power=999.0,
+            today_production=9999,
+            total_production=999_999,
+            link_status=False,
+        )
         plant = PlantData(dtu_serial="AABBCCDDEEFF", inverters=(online, offline))
 
         assert plant.online_inverters == (online,)

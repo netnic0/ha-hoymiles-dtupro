@@ -41,7 +41,6 @@ if _HAS_HA:  # pragma: no cover
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
     )
 
-
     class HoymilesAlarmBinarySensor(HoymilesPlantEntity, BinarySensorEntity):  # type: ignore[misc]
         """True iff any online inverter is reporting an alarm."""
 
@@ -53,7 +52,6 @@ if _HAS_HA:  # pragma: no cover
         def is_on(self) -> bool:
             data: PlantData = self.coordinator.data
             return data.alarm_flag
-
 
     class HoymilesLinkBinarySensor(HoymilesInverterEntity, BinarySensorEntity):  # type: ignore[misc]
         """Per-inverter RF link reachability."""
@@ -70,7 +68,6 @@ if _HAS_HA:  # pragma: no cover
                     return inv.link_status
             return False
 
-
     async def async_setup_entry(
         hass: HomeAssistant,
         entry: ConfigEntry,
@@ -82,7 +79,6 @@ if _HAS_HA:  # pragma: no cover
 
         entities: list[BinarySensorEntity] = [HoymilesAlarmBinarySensor(real_coord)]
         entities.extend(
-            HoymilesLinkBinarySensor(real_coord, inv.serial_number)
-            for inv in plant.inverters
+            HoymilesLinkBinarySensor(real_coord, inv.serial_number) for inv in plant.inverters
         )
         async_add_entities(entities)

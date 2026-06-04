@@ -131,15 +131,13 @@ class HoymilesAsyncClient:
         )
         try:
             connected = await client.connect()
-        except (OSError, asyncio.TimeoutError) as err:
+        except (TimeoutError, OSError) as err:
             raise HoymilesConnectionError(
                 f"cannot connect to {self._host}:{self._port}: {err}"
             ) from err
 
         if not connected:
-            raise HoymilesConnectionError(
-                f"connect() returned False for {self._host}:{self._port}"
-            )
+            raise HoymilesConnectionError(f"connect() returned False for {self._host}:{self._port}")
         _LOGGER.debug("Connected to Hoymiles DTU at %s:%s", self._host, self._port)
         return client
 
@@ -148,7 +146,7 @@ class HoymilesAsyncClient:
         """Best-effort close; does not raise."""
         try:
             client.close()
-        except Exception:  # noqa: BLE001
+        except Exception:
             _LOGGER.debug("client.close() raised; ignoring", exc_info=True)
 
     async def _read_holding_registers(
@@ -164,7 +162,7 @@ class HoymilesAsyncClient:
                 count=count,
                 slave=self._unit_id,
             )
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             raise HoymilesTimeoutError(
                 f"timeout reading register 0x{address:04X} (count={count})"
             ) from err
@@ -174,16 +172,12 @@ class HoymilesAsyncClient:
             ) from err
 
         if response.isError():
-            raise HoymilesProtocolError(
-                f"Modbus error response at 0x{address:04X}: {response}"
-            )
+            raise HoymilesProtocolError(f"Modbus error response at 0x{address:04X}: {response}")
 
         registers: list[int] = list(response.registers)
         return _registers_to_bytes(registers)
 
-    async def _read_all_inverters(
-        self, client: AsyncModbusTcpClient
-    ) -> list[InverterReading]:
+    async def _read_all_inverters(self, client: AsyncModbusTcpClient) -> list[InverterReading]:
         """Iterate inverter slots until NULL_INVERTER_SERIAL or MAX_INVERTER_SCAN."""
         inverters: list[InverterReading] = []
         scan_upper = self._cached_inverter_count or MAX_INVERTER_SCAN
@@ -194,9 +188,7 @@ class HoymilesAsyncClient:
                 client, address=address, count=INVERTER_REGISTER_COUNT
             )
             if len(raw) != INVERTER_PAYLOAD_BYTES:
-                raise HoymilesProtocolError(
-                    f"unexpected payload size {len(raw)} at slot {index}"
-                )
+                raise HoymilesProtocolError(f"unexpected payload size {len(raw)} at slot {index}")
             reading = decode_inverter_payload(raw)
             if reading.serial_number == NULL_INVERTER_SERIAL:
                 _LOGGER.debug("NULL_INVERTER reached at slot %d, stopping", index)

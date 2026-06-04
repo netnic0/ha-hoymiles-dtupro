@@ -10,14 +10,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from enum import Enum, unique
+from enum import StrEnum, unique
 from typing import Final
 
 from .const import SERIES_PREFIX_HM, SERIES_PREFIX_MI
 
 
 @unique
-class InverterSeries(str, Enum):
+class InverterSeries(StrEnum):
     """Hoymiles inverter series, derived from the serial-number prefix.
 
     See MODBUS_PROTOCOL_DTUPRO.md §2 — prefix table.
@@ -104,9 +104,7 @@ class InverterReading:
     def __post_init__(self) -> None:
         """Validate invariants. Raises ValueError if any field is out of range."""
         if len(self.serial_number) != 12:
-            raise ValueError(
-                f"serial_number must be 12 chars, got {len(self.serial_number)!r}"
-            )
+            raise ValueError(f"serial_number must be 12 chars, got {len(self.serial_number)!r}")
         if self.port_number < 0 or self.port_number > 255:
             raise ValueError(f"port_number out of range: {self.port_number}")
         if self.pv_voltage < 0 or self.pv_current < 0 or self.pv_power < 0:

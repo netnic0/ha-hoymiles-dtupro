@@ -57,9 +57,7 @@ USER_SCHEMA = vol.Schema(
 
 async def _probe_dtu(host: str, port: int, unit_id: int) -> str:
     """Open a Modbus connection, read the DTU serial, and close. Returns the SN."""
-    client = HoymilesAsyncClient(
-        host=host, port=port, unit_id=unit_id, timeout=DEFAULT_TIMEOUT_S
-    )
+    client = HoymilesAsyncClient(host=host, port=port, unit_id=unit_id, timeout=DEFAULT_TIMEOUT_S)
     return await client.async_get_dtu_serial()
 
 
@@ -88,7 +86,7 @@ try:  # pragma: no cover - exercised only inside HA
                     )
                 except HoymilesError:
                     errors["base"] = "cannot_connect"
-                except Exception:  # noqa: BLE001
+                except Exception:
                     _LOGGER.exception("Unexpected error during DTU probe")
                     errors["base"] = "unknown"
                 else:
@@ -99,9 +97,7 @@ try:  # pragma: no cover - exercised only inside HA
                         data=user_input,
                     )
 
-            return self.async_show_form(
-                step_id="user", data_schema=USER_SCHEMA, errors=errors
-            )
+            return self.async_show_form(step_id="user", data_schema=USER_SCHEMA, errors=errors)
 
         async def async_step_reconfigure(
             self, user_input: dict[str, Any] | None = None
@@ -118,7 +114,7 @@ try:  # pragma: no cover - exercised only inside HA
                     )
                 except HoymilesError:
                     errors["base"] = "cannot_connect"
-                except Exception:  # noqa: BLE001
+                except Exception:
                     errors["base"] = "unknown"
                 else:
                     if dtu_sn != entry.unique_id:

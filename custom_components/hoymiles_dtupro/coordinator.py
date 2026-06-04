@@ -45,8 +45,8 @@ except ImportError:  # pragma: no cover - PoC offline path
     _HAS_HA = False
     DataUpdateCoordinator = object  # type: ignore[assignment,misc]
 
-    class UpdateFailed(Exception):  # type: ignore[no-redef]
-        """Stub used only when running tests outside HA."""
+    class UpdateFailed(Exception):  # type: ignore[no-redef]  # noqa: N818
+        """Stub used only when running tests outside HA. Name mirrors HA's class."""
 
 
 class HoymilesRealDataCoordinator(DataUpdateCoordinator[PlantData]):  # type: ignore[type-arg,misc]

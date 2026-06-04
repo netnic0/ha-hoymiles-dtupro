@@ -28,25 +28,25 @@ from .exceptions import (
 from .models import InverterReading, InverterSeries, PlantData
 
 __all__ = [
-    # Client
-    "HoymilesAsyncClient",
-    # Models
-    "InverterReading",
-    "InverterSeries",
-    "PlantData",
-    # Exceptions
-    "HoymilesError",
-    "HoymilesConnectionError",
-    "HoymilesDecodeError",
-    "HoymilesProtocolError",
-    "HoymilesTimeoutError",
     # Defaults / constants (curated)
     "DEFAULT_PORT",
     "DEFAULT_TIMEOUT_S",
     "DEFAULT_UNIT_ID",
-    "DTU_TYPE_STANDARD",
     "DTU_TYPE_LEGACY",
     "DTU_TYPE_OPENDTU",
+    "DTU_TYPE_STANDARD",
+    # Client
+    "HoymilesAsyncClient",
+    "HoymilesConnectionError",
+    "HoymilesDecodeError",
+    # Exceptions
+    "HoymilesError",
+    "HoymilesProtocolError",
+    "HoymilesTimeoutError",
+    # Models
+    "InverterReading",
+    "InverterSeries",
+    "PlantData",
 ]
 
 __version__ = "0.0.1"
