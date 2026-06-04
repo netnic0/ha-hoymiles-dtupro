@@ -10,8 +10,8 @@ from unittest.mock import patch
 
 import pytest
 
-from ha_hoymiles_dtupro.client import HoymilesAsyncClient
-from ha_hoymiles_dtupro.exceptions import (
+from custom_components.hoymiles_dtupro.api.client import HoymilesAsyncClient
+from custom_components.hoymiles_dtupro.api.exceptions import (
     HoymilesConnectionError,
     HoymilesProtocolError,
 )

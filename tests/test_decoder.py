@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import pytest
 
-from ha_hoymiles_dtupro.decoder import (
+from custom_components.hoymiles_dtupro.api.decoder import (
     apply_data_size_fix,
     decode_inverter_payload,
     decode_serial_number,
 )
-from ha_hoymiles_dtupro.exceptions import HoymilesDecodeError, HoymilesProtocolError
-from ha_hoymiles_dtupro.models import InverterSeries
+from custom_components.hoymiles_dtupro.api.exceptions import (
+    HoymilesDecodeError,
+    HoymilesProtocolError,
+)
+from custom_components.hoymiles_dtupro.api.models import InverterSeries
 from tests.fixtures.inverter_samples import (
     SEVEN_HMS_INVERTERS,
     build_inverter_payload,

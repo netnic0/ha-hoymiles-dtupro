@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from ha_hoymiles_dtupro.exceptions import (
+from custom_components.hoymiles_dtupro.api.exceptions import (
     HoymilesConnectionError,
     HoymilesDecodeError,
     HoymilesError,

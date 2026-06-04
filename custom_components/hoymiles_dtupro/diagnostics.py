@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.diagnostics import async_redact_data
 
-from ha_hoymiles_dtupro import PlantData
-
+from .api import PlantData
 from .const import DOMAIN
 
 if TYPE_CHECKING:

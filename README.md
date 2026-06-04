@@ -148,9 +148,9 @@ releases. Watch the repository or the [CHANGELOG](CHANGELOG.md).
 │  Home Assistant integration  (custom_components/hoymiles_dtupro/)   │
 │  config flow, coordinators, entities, diagnostics, services, i18n   │
 └──────────────────────┬──────────────────────────────────────────────┘
-                       │ async API
+                       │ from .api import ...
 ┌──────────────────────▼──────────────────────────────────────────────┐
-│  Pure async library  (ha_hoymiles_dtupro/)                          │
+│  Pure async api  (custom_components/hoymiles_dtupro/api/)           │
 │  HoymilesAsyncClient → pymodbus.AsyncModbusTcpClient                │
 └──────────────────────┬──────────────────────────────────────────────┘
                        │
@@ -159,10 +159,10 @@ releases. Watch the repository or the [CHANGELOG](CHANGELOG.md).
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Why two packages?** The pure library has no Home Assistant dependency. It can
-be tested with synthetic byte payloads, and would be straightforward to extract
-to PyPI in a future release. The HA layer is a thin adapter on top — it does
-config flow, entity wiring, and translation, but no protocol logic.
+**Why a sub-package?** The `api/` sub-package has no Home Assistant dependency.
+It can be tested with synthetic byte payloads, and would be straightforward to
+extract to PyPI in a future release. The HA layer above it is a thin adapter —
+it does config flow, entity wiring, and translation, but no protocol logic.
 
 ---
 
@@ -179,8 +179,8 @@ pre-commit install
 # Lint, type check, test
 ruff check .
 ruff format --check .
-mypy ha_hoymiles_dtupro
-pytest --cov=ha_hoymiles_dtupro
+mypy custom_components/hoymiles_dtupro/api
+pytest --cov=custom_components.hoymiles_dtupro.api
 ```
 
 CI runs the same checks against Python 3.12 and 3.13 on every PR. See

@@ -13,8 +13,7 @@ from typing import TYPE_CHECKING
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from ha_hoymiles_dtupro import PlantData
-
+from .api import PlantData
 from .const import DOMAIN
 
 if TYPE_CHECKING:

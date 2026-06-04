@@ -52,10 +52,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      # Mypy is intentionally scoped to the pure library only — the HA layer
+      # Mypy is intentionally scoped to the pure api package only — the HA layer
       # is exercised by HA-native tests in milestone M2.
-      - name: mypy ha_hoymiles_dtupro
-        run: mypy ha_hoymiles_dtupro
+      - name: mypy custom_components/hoymiles_dtupro/api
+        run: mypy custom_components/hoymiles_dtupro/api
 
   test:
     name: Test pure-lib (Python ${{ matrix.python-version }})
@@ -81,7 +81,7 @@ jobs:
       # Coverage scoped to the pure library — see [tool.coverage.run].
       # HA-native tests live in the test-ha job and use a separate coverage scope.
       - name: pytest pure-lib with coverage
-        run: pytest tests/test_client.py tests/test_decoder.py tests/test_exceptions.py tests/test_models.py --cov=ha_hoymiles_dtupro --cov-report=term-missing --cov-report=xml --cov-fail-under=80
+        run: pytest tests/test_client.py tests/test_decoder.py tests/test_exceptions.py tests/test_models.py --cov=custom_components.hoymiles_dtupro.api --cov-report=term-missing --cov-report=xml --cov-fail-under=80
 
       - name: Upload coverage artifact
         if: matrix.python-version == '3.13'

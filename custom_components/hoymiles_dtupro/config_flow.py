@@ -13,14 +13,13 @@ from typing import TYPE_CHECKING, Any
 import voluptuous as vol
 from homeassistant import config_entries
 
-from ha_hoymiles_dtupro import (
+from .api import (
     DEFAULT_PORT,
     DEFAULT_TIMEOUT_S,
     DEFAULT_UNIT_ID,
     HoymilesAsyncClient,
     HoymilesError,
 )
-
 from .const import (
     CONF_HOST,
     CONF_PORT,
@@ -65,9 +64,7 @@ class HoymilesDtuProConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
     MINOR_VERSION = 1
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
             try:

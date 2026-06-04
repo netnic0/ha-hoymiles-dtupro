@@ -20,8 +20,7 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 
-from ha_hoymiles_dtupro import HoymilesAsyncClient, HoymilesError, PlantData
-
+from .api import HoymilesAsyncClient, HoymilesError, PlantData
 from .const import (
     DEFAULT_SCAN_INTERVAL_METADATA,
     DEFAULT_SCAN_INTERVAL_REAL_DATA,

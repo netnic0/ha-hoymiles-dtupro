@@ -22,8 +22,7 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 
-from ha_hoymiles_dtupro import PlantData
-
+from .api import PlantData
 from .const import DOMAIN
 from .entity import HoymilesInverterEntity, HoymilesPlantEntity
 
@@ -81,7 +80,9 @@ class HoymilesPlantSensor(HoymilesPlantEntity, SensorEntity):
     entity_description: SensorEntityDescription
 
     def __init__(self, coordinator, description: SensorEntityDescription) -> None:
-        super().__init__(coordinator, translation_key=description.translation_key or description.key)
+        super().__init__(
+            coordinator, translation_key=description.translation_key or description.key
+        )
         self.entity_description = description
 
     @property

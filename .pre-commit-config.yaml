@@ -14,9 +14,8 @@ repos:
     rev: v1.10.1
     hooks:
       - id: mypy
-        # Scope mypy to the pure library — the HA layer needs homeassistant-stubs
-        # which we add in milestone M2.
-        files: ^ha_hoymiles_dtupro/
+        # Scope mypy to the pure api package — HA layer needs homeassistant-stubs (M2).
+        files: ^custom_components/hoymiles_dtupro/api/
         additional_dependencies:
           - "pymodbus[serial]>=3.6,<4.0"
 

@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from ha_hoymiles_dtupro.models import (
+from custom_components.hoymiles_dtupro.api.models import (
     InverterReading,
     InverterSeries,
     PlantData,

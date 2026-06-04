@@ -1,13 +1,15 @@
 """Hoymiles DTU-Pro — Home Assistant integration entry point.
 
-This is the SKELETON of the modern integration; the actual entity wiring will
-be fleshed out in Milestones M1-M2 (see PLAN_NOUVELLE_INTEGRATION.md).
-
 Architecture (D5):
     Layer 1 (HA)        ← this package + sensor.py + config_flow.py
     Layer 2 (Coordinator) ← coordinator.py — TWO coordinators sharing ONE client (FC3)
-    Layer 3 (API)       ← `ha_hoymiles_dtupro` (sibling library, pure async, no HA imports)
-    Layer 4 (Models)    ← dataclasses inside ha_hoymiles_dtupro.models
+    Layer 3 (API)       ← `.api` (sub-package, pure async, no HA imports)
+    Layer 4 (Models)    ← dataclasses inside .api.models
+
+The top-level imports are kept HA-free so this package can be partially imported
+(e.g. `custom_components.hoymiles_dtupro.api.const`) by tools and tests that do
+not have a Home Assistant runtime available. HA-only imports (coordinator,
+config flow registration) happen lazily inside `async_setup_entry`.
 """
 
 from __future__ import annotations
@@ -15,17 +17,14 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from ha_hoymiles_dtupro import HoymilesAsyncClient
-
 from .const import (
     CONF_HOST,
     CONF_PORT,
     CONF_UNIT_ID,
     DOMAIN,
 )
-from .coordinator import HoymilesMetadataCoordinator, HoymilesRealDataCoordinator
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 
@@ -36,6 +35,11 @@ PLATFORMS: list[str] = ["sensor", "binary_sensor"]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Hoymiles DTU-Pro from a config entry."""
+    # Lazy imports: keep the package importable in non-HA environments (e.g. tooling
+    # that only inspects .api.const). HA itself is always present at this call site.
+    from .api import HoymilesAsyncClient
+    from .coordinator import HoymilesMetadataCoordinator, HoymilesRealDataCoordinator
+
     host = entry.data[CONF_HOST]
     port = entry.data.get(CONF_PORT, 502)
     unit_id = entry.data.get(CONF_UNIT_ID, 1)
@@ -72,8 +76,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Migrate old entry data to the current schema.
 
-    No migrations needed for v1 yet. Stub kept for forward-compat (mirrors
-    suaveolent F1 pattern from REVUE_SUAVEOLENT_ET_POC.md).
+    No migrations needed for v1 yet. Stub kept for forward-compat.
     """
     _LOGGER.debug("No migration needed for entry %s (version=%s)", entry.entry_id, entry.version)
     return True

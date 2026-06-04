@@ -9,7 +9,7 @@ from __future__ import annotations
 import struct
 from typing import Final
 
-from ha_hoymiles_dtupro.const import INVERTER_FMT, NULL_INVERTER_SERIAL
+from custom_components.hoymiles_dtupro.api.const import INVERTER_FMT, NULL_INVERTER_SERIAL
 
 
 def build_inverter_payload(

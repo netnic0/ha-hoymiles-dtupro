@@ -10,8 +10,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 
-from ha_hoymiles_dtupro import PlantData
-
+from .api import PlantData
 from .const import DOMAIN
 from .entity import HoymilesInverterEntity, HoymilesPlantEntity
 

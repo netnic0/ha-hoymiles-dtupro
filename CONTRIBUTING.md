@@ -18,14 +18,14 @@ using the matching template. For bugs, please include:
    `git checkout -b feat/short-description`.
 2. Install dev dependencies: `pip install -e ".[dev]"`.
 3. Set up the pre-commit hooks: `pre-commit install`.
-4. Write code + tests. Aim for ≥ 80 % coverage on the pure library
-   (`ha_hoymiles_dtupro/`).
+4. Write code + tests. Aim for ≥ 80 % coverage on the pure api package
+   (`custom_components/hoymiles_dtupro/api/`).
 5. Run the full check suite locally:
    ```bash
    ruff check .
    ruff format --check .
-   mypy ha_hoymiles_dtupro
-   pytest --cov=ha_hoymiles_dtupro
+   mypy custom_components/hoymiles_dtupro/api
+   pytest --cov=custom_components.hoymiles_dtupro.api
    ```
 6. Use [Conventional Commits](https://www.conventionalcommits.org/) for commit
    messages — release-please uses them to compute the next version and
@@ -44,8 +44,8 @@ using the matching template. For bugs, please include:
   signatures, lazy imports inside HA-only modules, `pragma: no cover` for HA
   imports that the offline test suite cannot exercise.
 - Lint with `ruff` (config in `pyproject.toml`); type-check with `mypy --strict`
-  on `ha_hoymiles_dtupro/` only — the HA layer is exercised by HA-native tests
-  in milestone M2.
+  on `custom_components/hoymiles_dtupro/api/` only — the HA layer is exercised
+  by HA-native tests in milestone M2.
 
 ## License & attribution
 

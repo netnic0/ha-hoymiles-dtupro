@@ -17,8 +17,9 @@ record, register `0x1000 + i*40`, big-endian struct format with mixed
 packet size byte) was learned by reading this project's `hoymiles/datatypes.py`
 and `hoymiles/client.py`.
 
-The pure decoder in `ha_hoymiles_dtupro/decoder.py` and the constant
-`INVERTER_FMT` in `ha_hoymiles_dtupro/const.py` are independent re-implementations
+The pure decoder in `custom_components/hoymiles_dtupro/api/decoder.py` and the
+constant `INVERTER_FMT` in `custom_components/hoymiles_dtupro/api/const.py` are
+independent re-implementations
 of that knowledge using only the Python standard library (`struct`), without
 copying source code.
 

@@ -2,13 +2,13 @@
 ## ha-hoymiles-dtupro — Home Assistant custom integration for Hoymiles DTU-Pro
 ## ─────────────────────────────────────────────────────────────────────────────
 ##
-## Two top-level Python packages live in this repository:
-##   - ha_hoymiles_dtupro/         pure async Modbus library (no HA dependency)
-##   - custom_components/hoymiles_dtupro/   Home Assistant integration layer
+## All Python code lives under custom_components/hoymiles_dtupro/, which is what
+## HACS ships to Home Assistant config directories:
+##   - custom_components/hoymiles_dtupro/api/   pure async Modbus library
+##   - custom_components/hoymiles_dtupro/       Home Assistant integration layer
 ##
-## The HA layer imports from the pure library; tests exercise the pure library
-## with mocked pymodbus. HA-native tests (pytest-homeassistant-custom-component)
-## are deferred to milestone M2.
+## The HA layer imports from .api; tests exercise the api package with mocked
+## pymodbus. HA-native tests use pytest-homeassistant-custom-component.
 ##
 ## License: MIT — see LICENSE and THIRD_PARTY_LICENSES.md for upstream credits.
 
@@ -58,7 +58,7 @@ Changelog     = "https://github.com/netnic0/ha-hoymiles-dtupro/blob/main/CHANGEL
 
 # ─── Setuptools (M0-I4: explicit package discovery) ───────────────────────────
 [tool.setuptools.packages.find]
-include = ["ha_hoymiles_dtupro*", "custom_components*"]
+include = ["custom_components*"]
 exclude = ["tests*", "lovelace_examples*"]
 
 # ─── Pytest ───────────────────────────────────────────────────────────────────
@@ -81,9 +81,9 @@ filterwarnings = [
     "ignore::DeprecationWarning:aiohttp.*",
 ]
 
-# ─── Coverage (M0-C3: source = pure lib only — HA layer is pragma:no-cover) ───
+# ─── Coverage (M0-C3: source = pure-api package only — HA layer is pragma:no-cover offline) ───
 [tool.coverage.run]
-source = ["ha_hoymiles_dtupro"]
+source = ["custom_components.hoymiles_dtupro.api"]
 branch = true
 
 [tool.coverage.report]
@@ -94,13 +94,12 @@ exclude_lines = [
 ]
 fail_under = 80
 
-# ─── Mypy (M0-I3: lib only for M0; expand in M2 with pytest-homeassistant) ────
+# ─── Mypy (M0-I3: api package only for M0; expand in M2 with pytest-homeassistant) ────
 [tool.mypy]
 python_version = "3.13"
 strict = true
-files = ["ha_hoymiles_dtupro"]
+files = ["custom_components/hoymiles_dtupro/api"]
 exclude = [
-    "custom_components",      # HA stubs not available without homeassistant-stubs
     "tests",                  # tests use AsyncMock, looser typing
 ]
 

@@ -19,8 +19,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from ha_hoymiles_dtupro.const import INVERTER_REGISTER_COUNT
-from ha_hoymiles_dtupro.models import InverterReading, PlantData
+from custom_components.hoymiles_dtupro.api.const import INVERTER_REGISTER_COUNT
+from custom_components.hoymiles_dtupro.api.models import InverterReading, PlantData
 
 if TYPE_CHECKING:
     from pytest_homeassistant_custom_component.common import MockConfigEntry

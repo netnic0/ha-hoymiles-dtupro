@@ -17,9 +17,9 @@ Thanks for the contribution! A few quick checks before we hit merge:
 
 - [ ] My commits follow the [Conventional Commits](https://www.conventionalcommits.org/) format.
 - [ ] I have added tests that prove my fix is effective or that my feature works.
-- [ ] New and existing unit tests pass locally with `pytest --cov=ha_hoymiles_dtupro`.
+- [ ] New and existing unit tests pass locally with `pytest --cov=custom_components.hoymiles_dtupro.api`.
 - [ ] `ruff check .` and `ruff format --check .` are clean.
-- [ ] `mypy ha_hoymiles_dtupro` is clean.
+- [ ] `mypy custom_components/hoymiles_dtupro/api` is clean.
 - [ ] I have updated `CHANGELOG.md` (or release-please will pick it up automatically from my Conventional Commits).
 - [ ] If this changes user-visible strings, I have updated `strings.json` and the four `translations/*.json` files (EN / FR / ES / DE).
 

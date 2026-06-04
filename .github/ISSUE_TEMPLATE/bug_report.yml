@@ -74,7 +74,6 @@ body:
           default: warning
           logs:
             custom_components.hoymiles_dtupro: debug
-            ha_hoymiles_dtupro: debug
         ```
       render: shell
     validations:
