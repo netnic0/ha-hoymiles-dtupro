@@ -1,0 +1,214 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Hoymiles DTU-Pro — Minimal Lovelace dashboard example
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# A clean, dependency-light Lovelace view that showcases the entities exposed
+# by the `hoymiles_dtupro` integration. This file is self-contained and does
+# NOT rely on any custom HACS frontend plugin.
+#
+# Required HACS frontend plugins: NONE (uses built-in cards only).
+# Optional enhancement: see photovoltaique_full.yaml for a richer version with
+# mushroom + apexcharts + custom-button-card.
+#
+# How to use:
+#   1. Copy the `views:` block below into your `lovelace.yaml`.
+#   2. Replace `<DTU_SN>` with your DTU's serial number (e.g. AABBCCDDEEFF).
+#   3. Replace `<INV_1>...<INV_N>` with your inverter serials.
+#   4. Reload the Lovelace UI in Home Assistant.
+#
+# Entity name convention (matches Home Assistant entity registry slugification):
+#   sensor.hoymiles_pv_pv_power                       -> plant total power
+#   sensor.hoymiles_pv_today_production               -> plant total today
+#   sensor.hoymiles_pv_total_production               -> plant lifetime
+#   sensor.hoymiles_pv_<inv_sn_lower>_pv_power        -> inverter power
+#   sensor.hoymiles_pv_<inv_sn_lower>_temperature     -> inverter temperature
+#   binary_sensor.hoymiles_pv_<inv_sn_lower>_link     -> inverter RF link
+#   binary_sensor.hoymiles_pv_alarm                   -> any-alarm flag
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+title: Hoymiles
+views:
+  - title: Solar
+    path: hoymiles-dtupro
+    icon: mdi:solar-power-variant
+    type: sections
+    max_columns: 4
+    sections:
+
+      # ─── Top row: live KPIs ──────────────────────────────────────────────
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: "🌞 Live production"
+            heading_style: title
+
+          - type: tile
+            entity: sensor.hoymiles_pv_pv_power
+            name: Plant power
+            icon: mdi:flash
+            color: amber
+            features_position: bottom
+
+          - type: tile
+            entity: sensor.hoymiles_pv_today_production
+            name: Today
+            icon: mdi:counter
+            color: orange
+
+          - type: tile
+            entity: sensor.hoymiles_pv_total_production
+            name: Lifetime
+            icon: mdi:chart-line
+            color: deep-orange
+
+          - type: tile
+            entity: binary_sensor.hoymiles_pv_alarm
+            name: Plant alarm
+            icon: mdi:alert-circle
+            color: red
+
+      # ─── Right top: gauge ────────────────────────────────────────────────
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: "Power gauge"
+            heading_style: title
+
+          - type: gauge
+            entity: sensor.hoymiles_pv_pv_power
+            name: Plant power
+            min: 0
+            max: 5000
+            needle: true
+            severity:
+              green: 1500
+              yellow: 500
+              red: 0
+            unit: W
+
+      # ─── Inverter grid (per-inverter live power) ─────────────────────────
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: "⚡ Inverters (live power per inverter)"
+            heading_style: title
+
+          - type: grid
+            columns: 4
+            square: false
+            cards:
+              # Repeat one tile per inverter. Replace serials with your own.
+              - type: tile
+                entity: sensor.hoymiles_pv_<INV_1>_pv_power
+                name: "Inv 1"
+                icon: mdi:current-ac
+                color: amber
+                features:
+                  - type: numeric-input
+                    style: slider
+              - type: tile
+                entity: sensor.hoymiles_pv_<INV_2>_pv_power
+                name: "Inv 2"
+                icon: mdi:current-ac
+                color: amber
+              - type: tile
+                entity: sensor.hoymiles_pv_<INV_3>_pv_power
+                name: "Inv 3"
+                icon: mdi:current-ac
+                color: amber
+              - type: tile
+                entity: sensor.hoymiles_pv_<INV_4>_pv_power
+                name: "Inv 4"
+                icon: mdi:current-ac
+                color: amber
+              - type: tile
+                entity: sensor.hoymiles_pv_<INV_5>_pv_power
+                name: "Inv 5"
+                icon: mdi:current-ac
+                color: amber
+              - type: tile
+                entity: sensor.hoymiles_pv_<INV_6>_pv_power
+                name: "Inv 6"
+                icon: mdi:current-ac
+                color: amber
+              - type: tile
+                entity: sensor.hoymiles_pv_<INV_7>_pv_power
+                name: "Inv 7"
+                icon: mdi:current-ac
+                color: amber
+
+      # ─── Inverter health (link + temperature) ────────────────────────────
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: "🩺 Inverter health"
+            heading_style: title
+
+          - type: glance
+            show_state: true
+            show_name: true
+            entities:
+              - entity: binary_sensor.hoymiles_pv_<INV_1>_link
+                name: Link 1
+              - entity: binary_sensor.hoymiles_pv_<INV_2>_link
+                name: Link 2
+              - entity: binary_sensor.hoymiles_pv_<INV_3>_link
+                name: Link 3
+              - entity: binary_sensor.hoymiles_pv_<INV_4>_link
+                name: Link 4
+              - entity: binary_sensor.hoymiles_pv_<INV_5>_link
+                name: Link 5
+              - entity: binary_sensor.hoymiles_pv_<INV_6>_link
+                name: Link 6
+              - entity: binary_sensor.hoymiles_pv_<INV_7>_link
+                name: Link 7
+
+          - type: glance
+            title: Temperatures (°C)
+            entities:
+              - entity: sensor.hoymiles_pv_<INV_1>_temperature
+                name: Inv 1
+              - entity: sensor.hoymiles_pv_<INV_2>_temperature
+                name: Inv 2
+              - entity: sensor.hoymiles_pv_<INV_3>_temperature
+                name: Inv 3
+              - entity: sensor.hoymiles_pv_<INV_4>_temperature
+                name: Inv 4
+              - entity: sensor.hoymiles_pv_<INV_5>_temperature
+                name: Inv 5
+              - entity: sensor.hoymiles_pv_<INV_6>_temperature
+                name: Inv 6
+              - entity: sensor.hoymiles_pv_<INV_7>_temperature
+                name: Inv 7
+
+      # ─── 24h history graphs ──────────────────────────────────────────────
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: "📈 24h history"
+            heading_style: title
+
+          - type: history-graph
+            title: Plant power (24h)
+            hours_to_show: 24
+            entities:
+              - entity: sensor.hoymiles_pv_pv_power
+                name: Plant power
+
+          - type: statistics-graph
+            title: Daily energy (last 7 days)
+            chart_type: bar
+            stat_types:
+              - sum
+            period:
+              calendar:
+                period: day
+                offset: -7
+            entities:
+              - sensor.hoymiles_pv_today_production

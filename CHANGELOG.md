@@ -1,0 +1,37 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Releases are automated by [release-please](https://github.com/googleapis/release-please)
+from [Conventional Commits](https://www.conventionalcommits.org/).
+
+## [Unreleased]
+
+## [0.1.0-alpha.1] — 2026-06-04
+
+### Added
+
+- Initial alpha release of the modern Hoymiles DTU-Pro integration.
+- Four-layer architecture: pure async Modbus library `ha_hoymiles_dtupro/` +
+  HA integration `custom_components/hoymiles_dtupro/`.
+- 51 unit tests against mocked pymodbus, 96 % coverage on the pure library.
+- Internationalisation: English, French, Spanish, German.
+- Diagnostics platform skeleton.
+- Lovelace minimal example dashboard (built-in cards only).
+
+### Known limitations
+
+- **Not yet validated against real hardware** — pending Phase 1 LAN test on a
+  DTU-Pro running firmware V00.07.04. See `README.md` "Experimental status".
+- HA-native integration tests (with `pytest-homeassistant-custom-component`)
+  are deferred to milestone M2; only the pure library is currently covered.
+- `apply_data_size_fix` is implemented as a pure function but not yet wired
+  into the async pymodbus client — to be done once we observe the firmware
+  bug behaviour in async mode.
+- Brand assets (`icon.png`, `logo.png`) not yet submitted to
+  [`home-assistant/brands`](https://github.com/home-assistant/brands).
+
+[Unreleased]: https://github.com/netnic0/ha-hoymiles-dtupro/compare/v0.1.0-alpha.1...HEAD
+[0.1.0-alpha.1]: https://github.com/netnic0/ha-hoymiles-dtupro/releases/tag/v0.1.0-alpha.1
