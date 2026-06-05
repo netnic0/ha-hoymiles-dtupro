@@ -105,35 +105,38 @@ Reconfiguring (host changed, scan interval tuning) is done via the
 
 ## Entities created
 
-Entity names follow your HA locale. The examples below use the French locale
-(default). In English, `puissance_pv` → `pv_power`, `production_du_jour` →
-`today_production`, etc.
+Entity IDs are generated from the `translation_key` slugified in your HA locale.
+The table below uses the **English** translation key names (locale `en`).
 
 ### Plant device (1 per DTU)
 
 | Entity | Domain | Description |
 |---|---|---|
-| `sensor.<dtu>_puissance_pv` | sensor | Plant total live power (W) |
-| `sensor.<dtu>_production_du_jour` | sensor | Plant total today (Wh) |
-| `sensor.<dtu>_production_totale` | sensor | Plant lifetime (Wh, `state_class: total`) |
-| `binary_sensor.<dtu>_alarme` | binary_sensor | Aggregated alarm flag |
+| `sensor.<dtu>_pv_power` | sensor | Plant total live power (W) |
+| `sensor.<dtu>_today_production` | sensor | Plant total today (Wh) |
+| `sensor.<dtu>_total_production` | sensor | Plant lifetime (Wh, `state_class: total`) |
+| `binary_sensor.<dtu>_alarm` | binary_sensor | Aggregated alarm flag |
 
 ### Per-inverter device (×N, one per detected inverter)
 
 | Entity | Domain | Description |
 |---|---|---|
-| `sensor.<inv>_puissance_pv_1` | sensor | Port 1 PV power (W) |
-| `sensor.<inv>_puissance_pv_2` | sensor | Port 2 PV power (W) — HMS-1000-2T dual MPPT |
-| `sensor.<inv>_tension_pv_1` / `_2` | sensor | Port PV voltage (V) |
-| `sensor.<inv>_courant_pv_1` / `_2` | sensor | Port PV current (A) |
-| `sensor.<inv>_production_du_jour_1` / `_2` | sensor | Port today production (Wh) |
-| `sensor.<inv>_production_totale_1` / `_2` | sensor | Port lifetime production (Wh) |
+| `sensor.<inv>_pv_power_1` | sensor | Port 1 PV power (W) |
+| `sensor.<inv>_pv_power_2` | sensor | Port 2 PV power (W) — HMS-1000-2T dual MPPT |
+| `sensor.<inv>_pv_voltage_1` / `_2` | sensor | Port PV voltage (V) |
+| `sensor.<inv>_pv_current_1` / `_2` | sensor | Port PV current (A) |
+| `sensor.<inv>_today_production_1` / `_2` | sensor | Port today production (Wh) |
+| `sensor.<inv>_total_production_1` / `_2` | sensor | Port lifetime production (Wh) |
 | `sensor.<inv>_temperature` | sensor | Inverter case temperature (°C, signed) |
-| `sensor.<inv>_tension_reseau` | sensor | Grid voltage (V) |
-| `sensor.<inv>_frequence_reseau` | sensor | Grid frequency (Hz) |
-| `sensor.<inv>_code_d_alarme` | sensor | Current alarm code (0 = no alarm) |
-| `sensor.<inv>_nombre_d_alarmes` | sensor | Cumulative alarm counter |
-| `binary_sensor.<inv>_liaison` | binary_sensor | RF link to inverter healthy |
+| `sensor.<inv>_grid_voltage` | sensor | Grid voltage (V) |
+| `sensor.<inv>_grid_frequency` | sensor | Grid frequency (Hz) |
+| `sensor.<inv>_alarm_code` | sensor | Current alarm code (0 = no alarm) |
+| `sensor.<inv>_alarm_count` | sensor | Cumulative alarm counter |
+| `binary_sensor.<inv>_link` | binary_sensor | RF link to inverter healthy |
+
+> **Note:** If your HA is configured in French, the entity slugs will use the
+> French translation keys (e.g. `puissance_pv`, `production_du_jour`, `liaison`).
+> The translation key names are defined in `translations/en.json`.
 
 ---
 
