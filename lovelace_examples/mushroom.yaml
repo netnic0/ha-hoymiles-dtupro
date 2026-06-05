@@ -1,0 +1,405 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Hoymiles DTU-Pro — Mushroom/ApexCharts Lovelace blueprint
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Required HACS frontend plugins:
+#   - mushroom          https://github.com/piitaya/lovelace-mushroom
+#   - apexcharts-card   https://github.com/RomRider/apexcharts-card
+#
+# How to use:
+#   1. Copy the `views:` block below into your `lovelace.yaml`
+#      (or paste the whole file as a new dashboard via
+#      Settings -> Dashboards -> + Add Dashboard -> From YAML).
+#   2. Replace EVERY placeholder in the table below:
+#
+#      Placeholder        Example value              Where to find it
+#      ─────────────────  ─────────────────────────  ──────────────────────────
+#      <DTU_SN>           4121a010e25c               DTU-Pro sticker / HA device
+#      <INV_1>            1144a00c1cab               Inverter 1 serial (lowercase)
+#      <INV_2>            1144a00cf81d               Inverter 2 serial (lowercase)
+#      <INV_3>            1144a00cf0eb               Inverter 3 serial (lowercase)
+#      <INV_4>            1144a00cfa64               Inverter 4 serial (lowercase)
+#      <INV_5>            1144a00c09ef               Inverter 5 serial (lowercase)
+#      <INV_6>            1144a00cfdb8               Inverter 6 serial (lowercase)
+#      <INV_7>            1144a00cddd2               Inverter 7 serial (lowercase)
+#
+#   3. Reload Lovelace (Developer Tools -> YAML -> Reload resources, or F5).
+#
+# Lixee (optional French smart meter) cards appear automatically only if
+# `sensor.lixee_sinsts` exists AND is not unavailable. Otherwise hidden.
+#
+# Hardware context:
+#   7 x HMS-1000-2T inverters (14 PV panels — 6 East + 8 West)
+#   1 x DTU-Pro  (serial 4121a010e25c)
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+title: Photovoltaique
+views:
+  - title: Solaire
+    path: pv-mushroom
+    icon: mdi:solar-power-variant
+    type: sections
+    max_columns: 4
+    sections:
+
+      # ─── Title ──────────────────────────────────────────────────────────────
+      - type: grid
+        column_span: 4
+        cards:
+          - type: custom:mushroom-title-card
+            title: "Photovoltaique"
+            subtitle: "DTU-Pro · 7 onduleurs · 14 panneaux"
+            title_tap_action:
+              action: none
+
+      # ─── KPI chips row ──────────────────────────────────────────────────────
+      # Compact horizontal strip: total power, today energy, alarm state.
+      - type: grid
+        column_span: 4
+        cards:
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              # Total plant power
+              - type: entity
+                entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+                icon: mdi:solar-power-variant
+                icon_color: amber
+                tap_action:
+                  action: more-info
+
+              # Today production
+              - type: entity
+                entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_du_jour
+                icon: mdi:counter
+                icon_color: orange
+                tap_action:
+                  action: more-info
+
+              # Total lifetime production
+              - type: entity
+                entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_totale
+                icon: mdi:chart-line
+                icon_color: deep-orange
+                tap_action:
+                  action: more-info
+
+              # Global alarm — red when on, green when off
+              - type: conditional
+                conditions:
+                  - entity: binary_sensor.hoymiles_dtu_pro_<DTU_SN>_alarme
+                    state: "on"
+                chip:
+                  type: entity
+                  entity: binary_sensor.hoymiles_dtu_pro_<DTU_SN>_alarme
+                  icon: mdi:alert-circle
+                  icon_color: red
+
+              # Lixee instantaneous consumption (hidden when unavailable)
+              - type: conditional
+                conditions:
+                  - entity: sensor.lixee_sinsts
+                    state_not: unavailable
+                chip:
+                  type: entity
+                  entity: sensor.lixee_sinsts
+                  icon: mdi:home-lightning-bolt
+                  icon_color: blue
+                  tap_action:
+                    action: more-info
+
+      # ─── Live KPI tiles ─────────────────────────────────────────────────────
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: "Production en direct"
+            heading_style: title
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+            icon: mdi:lightning-bolt
+            icon_color: amber
+            primary_info: state
+            secondary_info: last-changed
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_du_jour
+            icon: mdi:white-balance-sunny
+            icon_color: orange
+            primary_info: state
+            secondary_info: name
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_totale
+            icon: mdi:sigma
+            icon_color: deep-orange
+            primary_info: state
+            secondary_info: name
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.hoymiles_dtu_pro_<DTU_SN>_alarme
+            icon: mdi:alert-circle-outline
+            # icon_color is dynamic: red if on, green if off
+            icon_color: >-
+              {% if is_state('binary_sensor.hoymiles_dtu_pro_<DTU_SN>_alarme', 'on') %}
+                red
+              {% else %}
+                green
+              {% endif %}
+            primary_info: state
+            secondary_info: name
+            tap_action:
+              action: more-info
+
+      # ─── Lixee consumption tile (conditional) ───────────────────────────────
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: "Consommation reseau"
+            heading_style: title
+
+          - type: conditional
+            conditions:
+              - entity: sensor.lixee_sinsts
+                state_not: unavailable
+            card:
+              type: custom:mushroom-entity-card
+              entity: sensor.lixee_sinsts
+              icon: mdi:home-lightning-bolt
+              icon_color: blue
+              primary_info: state
+              secondary_info: last-changed
+              tap_action:
+                action: more-info
+
+          # Shown when Lixee is unavailable
+          - type: conditional
+            conditions:
+              - entity: sensor.lixee_sinsts
+                state: unavailable
+            card:
+              type: markdown
+              content: >
+                **Lixee (Linky) non disponible.**
+                Verifiez que l'integration Lixee est installee et que le
+                compteur est joignable.
+
+      # ─── ApexCharts: Production vs Consommation 24h ──────────────────────────
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: "Courbes 24h"
+            heading_style: title
+
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: "Production vs Consommation (24h)"
+              show_states: true
+              colorize_states: true
+            graph_span: 24h
+            apex_config:
+              chart:
+                height: 260
+              stroke:
+                curve: smooth
+                width: 2
+            series:
+              # Total plant power — area fill
+              - entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+                name: Production PV
+                type: area
+                color: "#f59e0b"
+                fill_raw: last
+                group_by:
+                  func: avg
+                  duration: 5min
+
+              # Lixee instantaneous consumption — line only (conditional via fill_raw)
+              - entity: sensor.lixee_sinsts
+                name: Consommation
+                type: line
+                color: "#3b82f6"
+                fill_raw: last
+                group_by:
+                  func: avg
+                  duration: 5min
+
+      # ─── Inverter temperatures (7 cards, 4-column grid) ─────────────────────
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: "Temperatures onduleurs"
+            heading_style: title
+
+          # One mushroom-entity-card per inverter (horizontal layout)
+          # Replace <INV_N> with real serials.
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_1>_temperature
+            name: "Inv 1"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_1>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            layout: horizontal
+            primary_info: state
+            secondary_info: name
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_2>_temperature
+            name: "Inv 2"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_2>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            layout: horizontal
+            primary_info: state
+            secondary_info: name
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_3>_temperature
+            name: "Inv 3"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_3>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            layout: horizontal
+            primary_info: state
+            secondary_info: name
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_4>_temperature
+            name: "Inv 4"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_4>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            layout: horizontal
+            primary_info: state
+            secondary_info: name
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_5>_temperature
+            name: "Inv 5"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_5>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            layout: horizontal
+            primary_info: state
+            secondary_info: name
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_6>_temperature
+            name: "Inv 6"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_6>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            layout: horizontal
+            primary_info: state
+            secondary_info: name
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_7>_temperature
+            name: "Inv 7"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_7>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            layout: horizontal
+            primary_info: state
+            secondary_info: name
+            tap_action:
+              action: more-info
+
+      # ─── Inverter RF link health (chips) ────────────────────────────────────
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: "Liaison RF onduleurs"
+            heading_style: title
+
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_1>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_1>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info
+
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_2>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_2>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info
+
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_3>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_3>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info
+
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_4>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_4>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info
+
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_5>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_5>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info
+
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_6>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_6>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info
+
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_7>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_7>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info

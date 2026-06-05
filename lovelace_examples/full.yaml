@@ -1,0 +1,1249 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Hoymiles DTU-Pro — Full "visual" Lovelace blueprint
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Required HACS frontend plugins:
+#   - mushroom                  https://github.com/piitaya/lovelace-mushroom
+#   - apexcharts-card           https://github.com/RomRider/apexcharts-card
+#   - button-card               https://github.com/custom-cards/button-card
+#   - card-mod                  https://github.com/thomasloven/lovelace-card-mod
+#   - vertical-stack-in-card    https://github.com/ofekashery/vertical-stack-in-card
+#
+# How to use:
+#   1. Copy the `views:` block below into your `lovelace.yaml`
+#      (or paste as a new dashboard via Settings -> Dashboards -> + Add Dashboard).
+#   2. Replace EVERY placeholder in the table below:
+#
+#      Placeholder        Example value              Where to find it
+#      ─────────────────  ─────────────────────────  ──────────────────────────
+#      <DTU_SN>           4121a010e25c               DTU-Pro sticker / HA device
+#      <INV_1>            1144a00c1cab               Onduleur Ouest 1 (lowercase)
+#      <INV_2>            1144a00cf81d               Onduleur Ouest 2 (lowercase)
+#      <INV_3>            1144a00cf0eb               Onduleur Ouest 3 (lowercase)
+#      <INV_4>            1144a00cfa64               Onduleur Ouest 4 (lowercase)
+#      <INV_5>            1144a00c09ef               Onduleur Est 1  (lowercase)
+#      <INV_6>            1144a00cfdb8               Onduleur Est 2  (lowercase)
+#      <INV_7>            1144a00cddd2               Onduleur Est 3  (lowercase)
+#
+#   3. Upload your panel image to HA at:
+#        /config/www/images/energie/pv/pv_petit.png
+#      (accessible in Lovelace as /local/images/energie/pv/pv_petit.png).
+#      If you want separate images per orientation, also add:
+#        /config/www/images/energie/pv/pv_petit_est.png
+#
+#   4. Reload Lovelace (Developer Tools -> YAML -> Reload resources).
+#
+# Layout overview:
+#   Section 1 — Header:       animated button-card circle + KPI tiles
+#   Section 2 — Panneaux Ouest: 4+4 button-card photo panels (ports 1 & 2)
+#   Section 3 — Panneaux Est:   2+2+2 button-card photo panels (ports 1 & 2)
+#   Section 4 — Charts:        ApexCharts 24h area + daily stacked bars
+#   Section 5 — Bilan:         ApexCharts radialBar autoconsommation + mushroom bilan
+#   Section 6 — Sante reseau:  7 x temperature + 7 x liaison RF
+#
+# Lixee (Linky smart meter) cards appear only if sensor.lixee_sinsts is not
+# unavailable. Otherwise the conditional cards collapse automatically.
+#
+# Hardware context:
+#   7 x HMS-1000-2T (2 MPPT ports each = 14 sensors per type)
+#   Orientation convention used here:
+#     Ouest (W) inverters: INV_1 .. INV_4   (8 panels, ports 1+2 each)
+#     Est   (E) inverters: INV_5 .. INV_7   (6 panels, ports 1+2 each)
+#
+# Maximum plant power: 7 x 1000 W AC = 7000 W (used as apex_config.yaxis max)
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+title: Photovoltaique
+views:
+  - title: Solaire
+    path: pv-full
+    icon: mdi:solar-power-variant
+    type: sections
+    max_columns: 4
+    sections:
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # SECTION 1 — HEADER: animated circle + KPI panel
+      # ═══════════════════════════════════════════════════════════════════════
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: "Production solaire"
+            heading_style: title
+
+      # Animated circle (button-card) — left side, column_span 1
+      - type: grid
+        column_span: 1
+        cards:
+          # The circle ring is drawn with a CSS conic-gradient keyed on
+          # the sensor state. Max plant power = 7000 W.
+          # The JS template is kept under 25 lines; no fetch/eval used.
+          - type: custom:button-card
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+            show_name: false
+            show_icon: false
+            show_state: true
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background: |
+                    [[[
+                      const raw = parseFloat(entity.state) || 0;
+                      const max = 7000;
+                      const pct = Math.min(Math.round(raw / max * 100), 100);
+                      const on  = 'rgba(251,191,36,0.85)';
+                      const off = 'rgba(51,65,85,0.4)';
+                      return `radial-gradient(circle at center, var(--card-background-color,#1e293b) 58%, transparent 58%),
+                              conic-gradient(${on} ${pct}%, ${off} ${pct}%)`;
+                    ]]]
+                - border-radius: 50%
+                - width: 120px
+                - height: 120px
+                - margin: 8px auto
+                - padding: "0"
+                - display: flex
+                - align-items: center
+                - justify-content: center
+              state:
+                - color: "#fbbf24"
+                - font-size: 18px
+                - font-weight: bold
+                - text-align: center
+                - z-index: "1"
+
+      # KPI panel — right side, column_span 3
+      - type: grid
+        column_span: 3
+        cards:
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+            icon: mdi:lightning-bolt
+            icon_color: amber
+            primary_info: state
+            secondary_info: name
+            layout: horizontal
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_du_jour
+            icon: mdi:white-balance-sunny
+            icon_color: orange
+            primary_info: state
+            secondary_info: name
+            layout: horizontal
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_totale
+            icon: mdi:sigma
+            icon_color: deep-orange
+            primary_info: state
+            secondary_info: name
+            layout: horizontal
+            tap_action:
+              action: more-info
+
+          # CO2 avoided tile — uses a template sensor or static formula.
+          # If you have a CO2 avoided sensor, replace the template string.
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set kwh = states('sensor.hoymiles_dtu_pro_<DTU_SN>_production_du_jour') | float(0) / 1000 %}
+              {{ (kwh * 0.4) | round(2) }} kg CO2 economise
+            secondary: "Facteur 400 g/kWh (France)"
+            icon: mdi:leaf
+            icon_color: green
+            layout: horizontal
+            tap_action:
+              action: none
+
+          # Alarm — shown always, color driven by state
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.hoymiles_dtu_pro_<DTU_SN>_alarme
+            icon: mdi:alert-circle-outline
+            icon_color: >-
+              {% if is_state('binary_sensor.hoymiles_dtu_pro_<DTU_SN>_alarme', 'on') %}red{% else %}green{% endif %}
+            primary_info: state
+            secondary_info: name
+            layout: horizontal
+            tap_action:
+              action: more-info
+
+          # Lixee instantaneous consumption (conditional)
+          - type: conditional
+            conditions:
+              - entity: sensor.lixee_sinsts
+                state_not: unavailable
+            card:
+              type: custom:mushroom-entity-card
+              entity: sensor.lixee_sinsts
+              icon: mdi:home-lightning-bolt
+              icon_color: blue
+              primary_info: state
+              secondary_info: last-changed
+              layout: horizontal
+              tap_action:
+                action: more-info
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # SECTION 2 — PANNEAUX OUEST (4 inverters x 2 ports = 8 panels)
+      # ═══════════════════════════════════════════════════════════════════════
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: "Panneaux Ouest (8 panneaux)"
+            heading_style: title
+
+          # ── Ouest — row 1: port 1 of each Ouest inverter ──────────────────
+          # Each button-card shows the power of one PV port with:
+          #   - photo background from /local/images/energie/pv/pv_petit.png
+          #   - gradient overlay tinted by output power (amber -> orange -> red)
+          #   - white bold state centered on the card
+          # Max per port: ~500 W (half of 1000 W inverter AC output).
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_1>_puissance_pv_1
+            name: "Ouest 1a"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_2>_puissance_pv_1
+            name: "Ouest 2a"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_3>_puissance_pv_1
+            name: "Ouest 3a"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_4>_puissance_pv_1
+            name: "Ouest 4a"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+          # ── Ouest — row 2: port 2 of each Ouest inverter ──────────────────
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_1>_puissance_pv_2
+            name: "Ouest 1b"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_2>_puissance_pv_2
+            name: "Ouest 2b"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_3>_puissance_pv_2
+            name: "Ouest 3b"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_4>_puissance_pv_2
+            name: "Ouest 4b"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # SECTION 3 — PANNEAUX EST (3 inverters x 2 ports = 6 panels)
+      # ═══════════════════════════════════════════════════════════════════════
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: "Panneaux Est (6 panneaux)"
+            heading_style: title
+
+          # ── Est — row 1: port 1 ───────────────────────────────────────────
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_5>_puissance_pv_1
+            name: "Est 1a"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_6>_puissance_pv_1
+            name: "Est 2a"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_7>_puissance_pv_1
+            name: "Est 3a"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+          # ── Est — row 2: port 2 ───────────────────────────────────────────
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_5>_puissance_pv_2
+            name: "Est 1b"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_6>_puissance_pv_2
+            name: "Est 2b"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+          - type: custom:button-card
+            entity: sensor.hoymiles_inverter_<INV_7>_puissance_pv_2
+            name: "Est 3b"
+            show_name: true
+            show_state: true
+            show_icon: false
+            tap_action:
+              action: more-info
+            styles:
+              card:
+                - background-image: "url('/local/images/energie/pv/pv_petit.png')"
+                - background-size: cover
+                - background-position: center
+                - height: 100px
+                - border-radius: 8px
+                - overflow: hidden
+                - position: relative
+                - padding: "0"
+              state:
+                - color: white
+                - font-size: 14px
+                - font-weight: bold
+                - position: absolute
+                - bottom: "8px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 3px rgba(0,0,0,0.8)"
+                - background: |
+                    [[[
+                      const v = parseFloat(entity.state) || 0;
+                      const max = 500;
+                      if (v <= 10)  return 'linear-gradient(to top, rgba(226,188,116,0.75) 100%, transparent 0%)';
+                      if (v <= 50)  return 'linear-gradient(to top, rgba(254,163,71,0.75) 100%, transparent 0%)';
+                      if (v <= 150) return 'linear-gradient(to top, rgba(255,165,0,0.75) 100%, transparent 0%)';
+                      return `linear-gradient(to top, rgba(255,69,0,0.75) ${Math.min(v/max*100,100)}%, rgba(255,165,0,0.4) 0%)`;
+                    ]]]
+              name:
+                - color: white
+                - font-size: 11px
+                - position: absolute
+                - top: "6px"
+                - width: 100%
+                - text-align: center
+                - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # SECTION 4 — CHARTS: Production vs Consommation
+      # ═══════════════════════════════════════════════════════════════════════
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: "Courbes et historique"
+            heading_style: title
+
+      # Chart A: 24h area — Production vs Consommation
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: "Production vs Consommation (24h)"
+              show_states: true
+              colorize_states: true
+            graph_span: 24h
+            stacked: false
+            apex_config:
+              chart:
+                height: 280
+              yaxis:
+                max: 7000
+                min: 0
+                labels:
+                  formatter: |
+                    EVAL:function(val) { return val + ' W'; }
+              stroke:
+                curve: smooth
+                width: 2
+              fill:
+                type: gradient
+                gradient:
+                  shadeIntensity: 0.4
+                  opacityFrom: 0.6
+                  opacityTo: 0.1
+            series:
+              - entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+                name: "Production PV"
+                type: area
+                color: "#f59e0b"
+                fill_raw: last
+                group_by:
+                  func: avg
+                  duration: 5min
+
+              - entity: sensor.lixee_sinsts
+                name: "Consommation"
+                type: area
+                color: "#3b82f6"
+                fill_raw: last
+                group_by:
+                  func: avg
+                  duration: 5min
+
+      # Chart B: stacked daily energy bars (last 7 days)
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: "Energie journaliere (7 jours)"
+              show_states: true
+              colorize_states: true
+            graph_span: 7d
+            stacked: true
+            chart_type: bar
+            apex_config:
+              chart:
+                height: 280
+              plotOptions:
+                bar:
+                  columnWidth: 60%
+              xaxis:
+                type: datetime
+                labels:
+                  datetimeFormatter:
+                    day: "dd/MM"
+              yaxis:
+                labels:
+                  formatter: |
+                    EVAL:function(val) { return (val/1000).toFixed(1) + ' kWh'; }
+            series:
+              # Production today (today_production is a daily accumulator)
+              - entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_du_jour
+                name: "Production"
+                color: "#f59e0b"
+                type: column
+                group_by:
+                  func: max
+                  duration: 1d
+                  fill: zero
+
+              # Lixee daily consumption (conditional — hides when unavailable)
+              - entity: sensor.lixee_sinsts
+                name: "Consommation"
+                color: "#3b82f6"
+                type: column
+                group_by:
+                  func: sum
+                  duration: 1d
+                  fill: zero
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # SECTION 5 — BILAN: radialBar autoconsommation + mushroom bilan
+      # ═══════════════════════════════════════════════════════════════════════
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: "Bilan energetique"
+            heading_style: title
+
+      # radialBar gauge — autoconsommation rate
+      # Formula: autoconsommation = min(production, consommation) / production * 100
+      # Requires both sensors to be available. Falls back to 0 if Lixee missing.
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: "Taux d'autoconsommation"
+            chart_type: radialBar
+            apex_config:
+              chart:
+                height: 260
+              plotOptions:
+                radialBar:
+                  hollow:
+                    size: 55%
+                  dataLabels:
+                    name:
+                      show: true
+                      fontSize: 13px
+                    value:
+                      show: true
+                      fontSize: 22px
+                      fontWeight: bold
+                      formatter: |
+                        EVAL:function(val) { return val.toFixed(1) + '%'; }
+              colors:
+                - "#f59e0b"
+              labels:
+                - "Autoconso"
+            series:
+              # Virtual entity: use a template sensor if available, or compute
+              # inline. Replace with sensor.autoconsommation_rate if you have one.
+              - entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+                name: "Autoconsommation"
+                # transform computes min(pv, conso) / pv * 100 live
+                # When Lixee is unavailable the value defaults to 0
+                transform: |
+                  EVAL:function(val, extra) {
+                    const pv   = parseFloat(val) || 0;
+                    const conso = parseFloat(extra.entity.states['sensor.lixee_sinsts']) || 0;
+                    if (pv <= 0) return 0;
+                    return Math.round(Math.min(pv, conso) / pv * 100);
+                  }
+                group_by:
+                  func: last
+                  duration: 1min
+
+      # Bilan tiles — production, conso, autoconsomme, injection, import
+      - type: grid
+        column_span: 2
+        cards:
+          # Total production today
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_du_jour
+            icon: mdi:solar-power-variant
+            icon_color: amber
+            primary_info: state
+            secondary_info: name
+            layout: horizontal
+
+          # Lixee instantaneous consumption
+          - type: conditional
+            conditions:
+              - entity: sensor.lixee_sinsts
+                state_not: unavailable
+            card:
+              type: custom:mushroom-entity-card
+              entity: sensor.lixee_sinsts
+              icon: mdi:home-lightning-bolt
+              icon_color: blue
+              primary_info: state
+              secondary_info: name
+              layout: horizontal
+
+          # Live power injected to grid = max(0, pv - conso)
+          # Requires a template sensor — replace with your entity if it exists.
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set pv = states('sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv') | float(0) %}
+              {% set conso = states('sensor.lixee_sinsts') | float(0) %}
+              {% set inj = [pv - conso, 0] | max %}
+              {{ inj | round(0) }} W
+            secondary: "Injection reseau (live)"
+            icon: mdi:transmission-tower-export
+            icon_color: green
+            layout: horizontal
+
+          # Live power imported from grid = max(0, conso - pv)
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set pv = states('sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv') | float(0) %}
+              {% set conso = states('sensor.lixee_sinsts') | float(0) %}
+              {% set imp = [conso - pv, 0] | max %}
+              {{ imp | round(0) }} W
+            secondary: "Soutirage reseau (live)"
+            icon: mdi:transmission-tower-import
+            icon_color: red
+            layout: horizontal
+
+          # Autoconsomme live = min(pv, conso)
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set pv = states('sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv') | float(0) %}
+              {% set conso = states('sensor.lixee_sinsts') | float(0) %}
+              {% set auto = [pv, conso] | min %}
+              {{ auto | round(0) }} W
+            secondary: "Autoconsomme (live)"
+            icon: mdi:home-lightning-bolt-outline
+            icon_color: orange
+            layout: horizontal
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # SECTION 6 — SANTE ONDULEURS: temperatures + liaison RF
+      # ═══════════════════════════════════════════════════════════════════════
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: "Sante onduleurs"
+            heading_style: title
+
+          # ── Temperatures ──────────────────────────────────────────────────
+          # Color thresholds: green < 45 C, orange 45-55 C, red >= 55 C
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_1>_temperature
+            name: "Onduleur 1 (Ouest)"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_1>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            primary_info: state
+            secondary_info: name
+            layout: horizontal
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_2>_temperature
+            name: "Onduleur 2 (Ouest)"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_2>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            primary_info: state
+            secondary_info: name
+            layout: horizontal
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_3>_temperature
+            name: "Onduleur 3 (Ouest)"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_3>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            primary_info: state
+            secondary_info: name
+            layout: horizontal
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_4>_temperature
+            name: "Onduleur 4 (Ouest)"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_4>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            primary_info: state
+            secondary_info: name
+            layout: horizontal
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_5>_temperature
+            name: "Onduleur 5 (Est)"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_5>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            primary_info: state
+            secondary_info: name
+            layout: horizontal
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_6>_temperature
+            name: "Onduleur 6 (Est)"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_6>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            primary_info: state
+            secondary_info: name
+            layout: horizontal
+            tap_action:
+              action: more-info
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.hoymiles_inverter_<INV_7>_temperature
+            name: "Onduleur 7 (Est)"
+            icon: mdi:thermometer
+            icon_color: >-
+              {% set t = states('sensor.hoymiles_inverter_<INV_7>_temperature') | float(0) %}
+              {% if t >= 55 %}red{% elif t >= 45 %}orange{% else %}green{% endif %}
+            primary_info: state
+            secondary_info: name
+            layout: horizontal
+            tap_action:
+              action: more-info
+
+          # ── Liaison RF ────────────────────────────────────────────────────
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_1>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_1>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info
+
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_2>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_2>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info
+
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_3>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_3>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info
+
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_4>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_4>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info
+
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_5>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_5>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info
+
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_6>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_6>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info
+
+              - type: entity
+                entity: binary_sensor.hoymiles_inverter_<INV_7>_liaison
+                icon: mdi:wifi
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hoymiles_inverter_<INV_7>_liaison', 'on') else 'red' }}
+                tap_action:
+                  action: more-info
