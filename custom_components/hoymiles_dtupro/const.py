@@ -16,7 +16,7 @@ CONF_SCAN_INTERVAL_REAL_DATA: Final[str] = "scan_interval_real_data"
 CONF_SCAN_INTERVAL_METADATA: Final[str] = "scan_interval_metadata"
 
 # ─── Default polling intervals (D6 — multi-coordinator) ────────────────────────
-DEFAULT_SCAN_INTERVAL_REAL_DATA: Final[timedelta] = timedelta(seconds=30)
+DEFAULT_SCAN_INTERVAL_REAL_DATA: Final[timedelta] = timedelta(seconds=60)
 """Live data: pv_power, voltages, temperature."""
 
 DEFAULT_SCAN_INTERVAL_METADATA: Final[timedelta] = timedelta(minutes=5)

@@ -14,7 +14,7 @@
           "host": "IP local del DTU-Pro (p. ej. 192.0.2.1).",
           "port": "El puerto Modbus TCP por defecto es 502.",
           "unit_id": "ID de esclavo Modbus. Por defecto 1; cámbialo solo si sabes lo que haces.",
-          "scan_interval_real_data": "Frecuencia con la que se obtienen los datos en vivo (potencia/tensión/corriente). Mínimo 10 segundos para no sobrecargar el DTU."
+          "scan_interval_real_data": "Frecuencia con la que se obtienen los datos en vivo (potencia/tensión/corriente). Mínimo 10 segundos. El valor por defecto es 60 segundos para no sobrecargar el DTU."
         }
       },
       "reconfigure": {

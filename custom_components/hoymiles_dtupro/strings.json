@@ -14,7 +14,7 @@
           "host": "Local IP of the DTU-Pro (e.g. 192.0.2.1).",
           "port": "Default Modbus TCP port is 502.",
           "unit_id": "Modbus slave ID. Default is 1; change only if you know what you're doing.",
-          "scan_interval_real_data": "How often to fetch live power/voltage/current data. Minimum 10 seconds to avoid stressing the DTU."
+          "scan_interval_real_data": "How often to fetch live power/voltage/current data. Minimum 10 seconds. Default is 60 seconds to avoid stressing the DTU."
         }
       },
       "reconfigure": {

@@ -14,7 +14,7 @@
           "host": "Lokale IP-Adresse des DTU-Pro (z. B. 192.0.2.1).",
           "port": "Der Modbus-TCP-Standardport ist 502.",
           "unit_id": "Modbus-Slave-ID. Standardmäßig 1; nur ändern, wenn Sie wissen, was Sie tun.",
-          "scan_interval_real_data": "Wie oft Live-Daten (Leistung/Spannung/Strom) abgerufen werden. Mindestens 10 Sekunden, um den DTU nicht zu überlasten."
+          "scan_interval_real_data": "Wie oft Live-Daten (Leistung/Spannung/Strom) abgerufen werden. Mindestens 10 Sekunden. Standard: 60 Sekunden, um den DTU nicht zu überlasten."
         }
       },
       "reconfigure": {

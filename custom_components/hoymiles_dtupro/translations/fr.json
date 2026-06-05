@@ -14,7 +14,7 @@
           "host": "Adresse IP locale du DTU-Pro (ex. 192.0.2.1).",
           "port": "Le port Modbus TCP par défaut est 502.",
           "unit_id": "ID esclave Modbus. Par défaut 1 ; ne modifier qu'en connaissance de cause.",
-          "scan_interval_real_data": "Fréquence de récupération des données en temps réel (puissance/tension/courant). Minimum 10 secondes afin de ne pas surcharger le DTU."
+          "scan_interval_real_data": "Fréquence de récupération des données en temps réel (puissance/tension/courant). Minimum 10 secondes. Valeur par défaut : 60 secondes pour ne pas surcharger le DTU."
         }
       },
       "reconfigure": {
