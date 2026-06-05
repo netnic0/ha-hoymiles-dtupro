@@ -10,6 +10,8 @@ import pytest
 from custom_components.hoymiles_dtupro.sensor import (
     INVERTER_SENSORS,
     PLANT_SENSORS,
+    PORT_SENSORS,
+    HoymilesInverterPortSensor,
     HoymilesInverterSensor,
     HoymilesPlantSensor,
 )
@@ -23,18 +25,19 @@ if TYPE_CHECKING:
 
 _CLIENT_PATH = "custom_components.hoymiles_dtupro.api.HoymilesAsyncClient"
 
+# 7 inverters, 2 ports each -> 14 InverterReading objects.
+_N_INVERTERS = 7
+_N_PORTS = 2
+
 
 @pytest.mark.asyncio
-async def test_setup_creates_plant_and_inverter_sensors(
+async def test_setup_creates_correct_sensor_count(
     hass: HomeAssistant,
     enable_custom_integrations,
     mock_config_entry: MockConfigEntry,
     mock_plant_data: PlantData,
 ) -> None:
-    """Setting up the entry registers plant + per-inverter sensor entities.
-
-    Expected count: len(PLANT_SENSORS) + n_inverters * len(INVERTER_SENSORS).
-    """
+    """Sensor count: 3 plant + N_inv*5 inverter + N_inv*N_ports*5 port."""
     mock_config_entry.add_to_hass(hass)
 
     fake_client = AsyncMock()
@@ -47,7 +50,11 @@ async def test_setup_creates_plant_and_inverter_sensors(
     sensor_entity_ids = [
         s.entity_id for s in hass.states.async_all() if s.entity_id.startswith("sensor.")
     ]
-    expected_count = len(PLANT_SENSORS) + mock_plant_data.inverter_count * len(INVERTER_SENSORS)
+    expected_count = (
+        len(PLANT_SENSORS)
+        + _N_INVERTERS * len(INVERTER_SENSORS)
+        + _N_INVERTERS * _N_PORTS * len(PORT_SENSORS)
+    )
     assert len(sensor_entity_ids) == expected_count
 
 
@@ -63,16 +70,15 @@ def test_plant_sensor_native_value_pulls_from_coordinator(
     sensor.coordinator = coord
     sensor.entity_description = description
 
-    # Plant.pv_power is the sum across online inverters; each fixture inverter is online @ 312.6 W.
     expected = sum(inv.pv_power for inv in mock_plant_data.inverters if inv.link_status)
     assert sensor.native_value == pytest.approx(expected)
 
 
-def test_inverter_sensor_native_value_resolves_by_serial(
+def test_inverter_sensor_reads_port1(
     mock_plant_data: PlantData, mock_inverter_serials: list[str]
 ) -> None:
-    """Per-inverter sensor's native_value pulls from the inverter matching its serial."""
-    target_serial = mock_inverter_serials[2]  # arbitrary inverter
+    """Per-inverter sensor reads from port_number == 1 for temperature."""
+    target_serial = mock_inverter_serials[2]
     description = next(d for d in INVERTER_SENSORS if d.key == "temperature")
 
     coord = AsyncMock()
@@ -83,11 +89,12 @@ def test_inverter_sensor_native_value_resolves_by_serial(
     sensor.entity_description = description
     sensor._inverter_serial = target_serial
 
-    # All fixture inverters share the same temperature (41.3 °C); we verify lookup not mismatch.
-    expected_inv = next(
-        inv for inv in mock_plant_data.inverters if inv.serial_number == target_serial
+    port1 = next(
+        inv
+        for inv in mock_plant_data.inverters
+        if inv.serial_number == target_serial and inv.port_number == 1
     )
-    assert sensor.native_value == pytest.approx(expected_inv.temperature)
+    assert sensor.native_value == pytest.approx(port1.temperature)
 
 
 def test_inverter_sensor_returns_none_for_unknown_serial(
@@ -103,5 +110,48 @@ def test_inverter_sensor_returns_none_for_unknown_serial(
     sensor.coordinator = coord
     sensor.entity_description = description
     sensor._inverter_serial = "ZZZZZZZZZZZZ"
+
+    assert sensor.native_value is None
+
+
+def test_port_sensor_resolves_correct_port(
+    mock_plant_data: PlantData, mock_inverter_serials: list[str]
+) -> None:
+    """Port sensor native_value resolves by both serial and port_number."""
+    target_serial = mock_inverter_serials[1]
+    description = next(d for d in PORT_SENSORS if d.key == "pv_power")
+
+    coord = AsyncMock()
+    coord.data = mock_plant_data
+
+    for port in (1, 2):
+        sensor = HoymilesInverterPortSensor.__new__(HoymilesInverterPortSensor)
+        sensor.coordinator = coord
+        sensor.entity_description = description
+        sensor._inverter_serial = target_serial
+        sensor._port_number = port
+
+        expected = next(
+            inv.pv_power
+            for inv in mock_plant_data.inverters
+            if inv.serial_number == target_serial and inv.port_number == port
+        )
+        assert sensor.native_value == pytest.approx(expected)
+
+
+def test_port_sensor_returns_none_for_unknown_serial(
+    mock_plant_data: PlantData,
+) -> None:
+    """Port sensor returns None when serial is not found."""
+    description = next(d for d in PORT_SENSORS if d.key == "pv_voltage")
+
+    coord = AsyncMock()
+    coord.data = mock_plant_data
+
+    sensor = HoymilesInverterPortSensor.__new__(HoymilesInverterPortSensor)
+    sensor.coordinator = coord
+    sensor.entity_description = description
+    sensor._inverter_serial = "ZZZZZZZZZZZZ"
+    sensor._port_number = 1
 
     assert sensor.native_value is None

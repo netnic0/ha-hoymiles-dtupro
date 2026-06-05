@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
-# ─── Pure-library helpers (unchanged from M0) ─────────────────────────────────
+# --- Pure-library helpers (unchanged from M0) ---------------------------------
 
 
 def _bytes_to_registers(raw: bytes) -> list[int]:
@@ -67,7 +67,7 @@ def inverter_register_count() -> int:
     return INVERTER_REGISTER_COUNT
 
 
-# ─── HA-native fixtures ───────────────────────────────────────────────────────
+# --- HA-native fixtures -------------------------------------------------------
 #
 # These rely on pytest-homeassistant-custom-component (PHCC) being installed.
 # Tests that need them must also explicitly request the `enable_custom_integrations`
@@ -86,11 +86,13 @@ def mock_inverter_serials() -> list[str]:
     return [f"114400000{n:03X}" for n in range(0xA1, 0xA8)]
 
 
-def _build_inverter_reading(serial: str, *, link: bool = True, alarm: int = 0) -> InverterReading:
-    """Helper to build a syntactically-valid InverterReading for HA-native tests."""
+def _build_inverter_reading(
+    serial: str, port: int = 1, *, link: bool = True, alarm: int = 0
+) -> InverterReading:
+    """Build a syntactically-valid InverterReading for HA-native tests."""
     return InverterReading(
         serial_number=serial,
-        port_number=1,
+        port_number=port,
         pv_voltage=38.5,
         pv_current=8.21,
         grid_voltage=233.4,
@@ -109,11 +111,15 @@ def _build_inverter_reading(serial: str, *, link: bool = True, alarm: int = 0) -
 
 @pytest.fixture
 def mock_plant_data(mock_dtu_serial: str, mock_inverter_serials: list[str]) -> PlantData:
-    """A populated PlantData snapshot suitable for coordinator-state assertions."""
+    """A populated PlantData snapshot with 2 ports per inverter (14 InverterReading total)."""
+    readings = []
+    for sn in mock_inverter_serials:
+        readings.append(_build_inverter_reading(sn, port=1))
+        readings.append(_build_inverter_reading(sn, port=2))
     return PlantData(
         dtu_serial=mock_dtu_serial,
         fetched_at=datetime(2026, 6, 4, 12, 0, 0, tzinfo=UTC),
-        inverters=tuple(_build_inverter_reading(sn) for sn in mock_inverter_serials),
+        inverters=tuple(readings),
     )
 
 

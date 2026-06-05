@@ -1,4 +1,10 @@
-"""Binary sensor platform — `link_status` per inverter + global `alarm` flag."""
+"""Binary sensor platform for the Hoymiles DTU-Pro integration.
+
+Entities:
+  * One plant-level alarm binary_sensor (DTU device).
+  * One link binary_sensor per inverter (reads port_number == 1; link_status is
+    identical across ports so only one entity per inverter is needed).
+"""
 
 from __future__ import annotations
 
@@ -57,7 +63,7 @@ class HoymilesLinkBinarySensor(HoymilesInverterEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         data: PlantData = self.coordinator.data
         for inv in data.inverters:
-            if inv.serial_number == self._inverter_serial:
+            if inv.serial_number == self._inverter_serial and inv.port_number == 1:
                 return inv.link_status
         return False
 
@@ -72,7 +78,12 @@ async def async_setup_entry(
     plant: PlantData = real_coord.data
 
     entities: list[BinarySensorEntity] = [HoymilesAlarmBinarySensor(real_coord)]
-    entities.extend(
-        HoymilesLinkBinarySensor(real_coord, inv.serial_number) for inv in plant.inverters
-    )
+
+    seen_serials: set[str] = set()
+    for inv in plant.inverters:
+        serial = inv.serial_number
+        if serial not in seen_serials:
+            seen_serials.add(serial)
+            entities.append(HoymilesLinkBinarySensor(real_coord, serial))
+
     async_add_entities(entities)

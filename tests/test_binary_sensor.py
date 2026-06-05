@@ -42,8 +42,10 @@ async def test_setup_creates_alarm_and_link_binary_sensors(
     binary_ids = [
         s.entity_id for s in hass.states.async_all() if s.entity_id.startswith("binary_sensor.")
     ]
-    # 1 alarm (plant-level) + 1 link per inverter.
-    expected = 1 + mock_plant_data.inverter_count
+    # 1 alarm (plant-level) + 1 link per unique inverter serial (link_status is
+    # port-agnostic, so only one entity is created per inverter regardless of port count).
+    unique_serials = len({inv.serial_number for inv in mock_plant_data.inverters})
+    expected = 1 + unique_serials
     assert len(binary_ids) == expected
 
 
