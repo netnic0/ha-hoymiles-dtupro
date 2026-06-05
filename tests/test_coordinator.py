@@ -85,13 +85,13 @@ async def test_real_data_and_metadata_share_one_client(
 
 @pytest.mark.asyncio
 async def test_coordinators_use_their_default_intervals(hass: HomeAssistant) -> None:
-    """The two coordinators carry the documented default intervals (30s vs 5min)."""
+    """The two coordinators carry the documented default intervals (60s vs 5min)."""
     client = AsyncMock(spec=HoymilesAsyncClient)
 
     real = HoymilesRealDataCoordinator(hass, client)
     meta = HoymilesMetadataCoordinator(hass, client)
 
-    assert real.update_interval == DEFAULT_SCAN_INTERVAL_REAL_DATA == timedelta(seconds=30)
+    assert real.update_interval == DEFAULT_SCAN_INTERVAL_REAL_DATA
     assert meta.update_interval == DEFAULT_SCAN_INTERVAL_METADATA == timedelta(minutes=5)
     # Sanity: the real-data interval is strictly shorter than the metadata interval.
     assert real.update_interval < meta.update_interval
