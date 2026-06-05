@@ -10,6 +10,8 @@ on:
     - cron: "37 4 * * 1"
   workflow_dispatch:
 
+permissions: read-all
+
 jobs:
   hassfest:
     name: hassfest
