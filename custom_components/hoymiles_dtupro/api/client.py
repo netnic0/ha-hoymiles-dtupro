@@ -29,7 +29,7 @@ from .const import (
     MODBUS_REGISTER_INVERTER_BASE,
     NULL_INVERTER_SERIAL,
 )
-from .decoder import decode_inverter_payload, decode_serial_number
+from .decoder import apply_data_size_fix, decode_inverter_payload, decode_serial_number
 from .exceptions import (
     HoymilesConnectionError,
     HoymilesProtocolError,
@@ -189,6 +189,7 @@ class HoymilesAsyncClient:
             )
             if len(raw) != INVERTER_PAYLOAD_BYTES:
                 raise HoymilesProtocolError(f"unexpected payload size {len(raw)} at slot {index}")
+            raw = apply_data_size_fix(raw)
             reading = decode_inverter_payload(raw)
             if reading.serial_number == NULL_INVERTER_SERIAL:
                 _LOGGER.debug("NULL_INVERTER reached at slot %d, stopping", index)
