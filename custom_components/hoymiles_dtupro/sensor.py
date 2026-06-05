@@ -51,7 +51,7 @@ PLANT_SENSORS: tuple[SensorEntityDescription, ...] = (
         key="total_production",
         translation_key="total_production",
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
     ),
 )
