@@ -41,9 +41,9 @@
   },
   "entity": {
     "sensor": {
-      "pv_power": { "name": "Potencia FV" },
-      "today_production": { "name": "Producción de hoy" },
-      "total_production": { "name": "Producción total" },
+      "pv_power": { "name": "Potencia" },
+      "today_production": { "name": "Energía hoy" },
+      "total_production": { "name": "Energía total" },
       "temperature": { "name": "Temperatura" },
       "grid_voltage": { "name": "Tensión de red" },
       "grid_frequency": { "name": "Frecuencia de red" },

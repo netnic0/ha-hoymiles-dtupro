@@ -81,7 +81,7 @@ views:
           # the sensor state. Max plant power = 7000 W.
           # The JS template is kept under 25 lines; no fetch/eval used.
           - type: custom:button-card
-            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_instantanee
             show_name: false
             show_icon: false
             show_state: true
@@ -119,7 +119,7 @@ views:
         column_span: 3
         cards:
           - type: custom:mushroom-entity-card
-            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_instantanee
             icon: mdi:lightning-bolt
             icon_color: amber
             primary_info: state
@@ -129,7 +129,7 @@ views:
               action: more-info
 
           - type: custom:mushroom-entity-card
-            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_du_jour
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_energie_du_jour
             icon: mdi:white-balance-sunny
             icon_color: orange
             primary_info: state
@@ -139,7 +139,7 @@ views:
               action: more-info
 
           - type: custom:mushroom-entity-card
-            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_totale
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_energie_totale_cumul
             icon: mdi:sigma
             icon_color: deep-orange
             primary_info: state
@@ -152,7 +152,7 @@ views:
           # If you have a CO2 avoided sensor, replace the template string.
           - type: custom:mushroom-template-card
             primary: >-
-              {% set kwh = states('sensor.hoymiles_dtu_pro_<DTU_SN>_production_du_jour') | float(0) / 1000 %}
+              {% set kwh = states('sensor.hoymiles_dtu_pro_<DTU_SN>_energie_du_jour') | float(0) / 1000 %}
               {{ (kwh * 0.4) | round(2) }} kg CO2 economise
             secondary: "Facteur 400 g/kWh (France)"
             icon: mdi:leaf
@@ -207,7 +207,7 @@ views:
           # Max per port: ~500 W (half of 1000 W inverter AC output).
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_1>_puissance_pv_1
+            entity: sensor.hoymiles_inverter_<INV_1>_puissance_instantanee_1
             name: "Ouest 1a"
             show_name: true
             show_state: true
@@ -252,7 +252,7 @@ views:
                 - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_2>_puissance_pv_1
+            entity: sensor.hoymiles_inverter_<INV_2>_puissance_instantanee_1
             name: "Ouest 2a"
             show_name: true
             show_state: true
@@ -297,7 +297,7 @@ views:
                 - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_3>_puissance_pv_1
+            entity: sensor.hoymiles_inverter_<INV_3>_puissance_instantanee_1
             name: "Ouest 3a"
             show_name: true
             show_state: true
@@ -342,7 +342,7 @@ views:
                 - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_4>_puissance_pv_1
+            entity: sensor.hoymiles_inverter_<INV_4>_puissance_instantanee_1
             name: "Ouest 4a"
             show_name: true
             show_state: true
@@ -389,7 +389,7 @@ views:
           # ── Ouest — row 2: port 2 of each Ouest inverter ──────────────────
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_1>_puissance_pv_2
+            entity: sensor.hoymiles_inverter_<INV_1>_puissance_instantanee_2
             name: "Ouest 1b"
             show_name: true
             show_state: true
@@ -434,7 +434,7 @@ views:
                 - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_2>_puissance_pv_2
+            entity: sensor.hoymiles_inverter_<INV_2>_puissance_instantanee_2
             name: "Ouest 2b"
             show_name: true
             show_state: true
@@ -479,7 +479,7 @@ views:
                 - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_3>_puissance_pv_2
+            entity: sensor.hoymiles_inverter_<INV_3>_puissance_instantanee_2
             name: "Ouest 3b"
             show_name: true
             show_state: true
@@ -524,7 +524,7 @@ views:
                 - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_4>_puissance_pv_2
+            entity: sensor.hoymiles_inverter_<INV_4>_puissance_instantanee_2
             name: "Ouest 4b"
             show_name: true
             show_state: true
@@ -581,7 +581,7 @@ views:
           # ── Est — row 1: port 1 ───────────────────────────────────────────
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_5>_puissance_pv_1
+            entity: sensor.hoymiles_inverter_<INV_5>_puissance_instantanee_1
             name: "Est 1a"
             show_name: true
             show_state: true
@@ -626,7 +626,7 @@ views:
                 - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_6>_puissance_pv_1
+            entity: sensor.hoymiles_inverter_<INV_6>_puissance_instantanee_1
             name: "Est 2a"
             show_name: true
             show_state: true
@@ -671,7 +671,7 @@ views:
                 - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_7>_puissance_pv_1
+            entity: sensor.hoymiles_inverter_<INV_7>_puissance_instantanee_1
             name: "Est 3a"
             show_name: true
             show_state: true
@@ -718,7 +718,7 @@ views:
           # ── Est — row 2: port 2 ───────────────────────────────────────────
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_5>_puissance_pv_2
+            entity: sensor.hoymiles_inverter_<INV_5>_puissance_instantanee_2
             name: "Est 1b"
             show_name: true
             show_state: true
@@ -763,7 +763,7 @@ views:
                 - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_6>_puissance_pv_2
+            entity: sensor.hoymiles_inverter_<INV_6>_puissance_instantanee_2
             name: "Est 2b"
             show_name: true
             show_state: true
@@ -808,7 +808,7 @@ views:
                 - text-shadow: "0 1px 2px rgba(0,0,0,0.8)"
 
           - type: custom:button-card
-            entity: sensor.hoymiles_inverter_<INV_7>_puissance_pv_2
+            entity: sensor.hoymiles_inverter_<INV_7>_puissance_instantanee_2
             name: "Est 3b"
             show_name: true
             show_state: true
@@ -893,7 +893,7 @@ views:
                   opacityFrom: 0.6
                   opacityTo: 0.1
             series:
-              - entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+              - entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_instantanee
                 name: "Production PV"
                 type: area
                 color: "#f59e0b"
@@ -941,7 +941,7 @@ views:
                     EVAL:function(val) { return (val/1000).toFixed(1) + ' kWh'; }
             series:
               # Production today (today_production is a daily accumulator)
-              - entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_du_jour
+              - entity: sensor.hoymiles_dtu_pro_<DTU_SN>_energie_du_jour
                 name: "Production"
                 color: "#f59e0b"
                 type: column
@@ -1005,7 +1005,7 @@ views:
             series:
               # Virtual entity: use a template sensor if available, or compute
               # inline. Replace with sensor.autoconsommation_rate if you have one.
-              - entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+              - entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_instantanee
                 name: "Autoconsommation"
                 # transform computes min(pv, conso) / pv * 100 live
                 # When Lixee is unavailable the value defaults to 0
@@ -1026,7 +1026,7 @@ views:
         cards:
           # Total production today
           - type: custom:mushroom-entity-card
-            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_du_jour
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_energie_du_jour
             icon: mdi:solar-power-variant
             icon_color: amber
             primary_info: state
@@ -1051,7 +1051,7 @@ views:
           # Requires a template sensor — replace with your entity if it exists.
           - type: custom:mushroom-template-card
             primary: >-
-              {% set pv = states('sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv') | float(0) %}
+              {% set pv = states('sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_instantanee') | float(0) %}
               {% set conso = states('sensor.lixee_sinsts') | float(0) %}
               {% set inj = [pv - conso, 0] | max %}
               {{ inj | round(0) }} W
@@ -1063,7 +1063,7 @@ views:
           # Live power imported from grid = max(0, conso - pv)
           - type: custom:mushroom-template-card
             primary: >-
-              {% set pv = states('sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv') | float(0) %}
+              {% set pv = states('sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_instantanee') | float(0) %}
               {% set conso = states('sensor.lixee_sinsts') | float(0) %}
               {% set imp = [conso - pv, 0] | max %}
               {{ imp | round(0) }} W
@@ -1075,7 +1075,7 @@ views:
           # Autoconsomme live = min(pv, conso)
           - type: custom:mushroom-template-card
             primary: >-
-              {% set pv = states('sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv') | float(0) %}
+              {% set pv = states('sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_instantanee') | float(0) %}
               {% set conso = states('sensor.lixee_sinsts') | float(0) %}
               {% set auto = [pv, conso] | min %}
               {{ auto | round(0) }} W

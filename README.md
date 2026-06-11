@@ -113,8 +113,8 @@ The table below uses the **English** translation key names (locale `en`).
 | Entity | Domain | Description |
 |---|---|---|
 | `sensor.<dtu>_pv_power` | sensor | Plant total live power (W) |
-| `sensor.<dtu>_today_production` | sensor | Plant total today (Wh) |
-| `sensor.<dtu>_total_production` | sensor | Plant lifetime (Wh, `state_class: total`) |
+| `sensor.<dtu>_today_production` | sensor | Plant total today (Wh, displayed as kWh, `state_class: total_increasing`) |
+| `sensor.<dtu>_total_production` | sensor | Plant lifetime (Wh, displayed as kWh, `state_class: total`) |
 | `binary_sensor.<dtu>_alarm` | binary_sensor | Aggregated alarm flag |
 
 ### Per-inverter device (×N, one per detected inverter)
@@ -135,7 +135,7 @@ The table below uses the **English** translation key names (locale `en`).
 | `binary_sensor.<inv>_link` | binary_sensor | RF link to inverter healthy |
 
 > **Note:** If your HA is configured in French, the entity slugs will use the
-> French translation keys (e.g. `puissance_pv`, `production_du_jour`, `liaison`).
+> French translation keys (e.g. `puissance_instantanee`, `energie_du_jour`, `liaison`).
 > The translation key names are defined in `translations/en.json`.
 
 ---

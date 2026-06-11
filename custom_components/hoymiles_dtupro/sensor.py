@@ -32,6 +32,7 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
+from homeassistant.helpers.entity import EntityCategory
 
 from .api import PlantData
 from .const import DOMAIN
@@ -57,13 +58,18 @@ PLANT_SENSORS: tuple[SensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
     ),
     SensorEntityDescription(
         key="total_production",
         translation_key="total_production",
+        # state_class TOTAL (not TOTAL_INCREASING): the DTU resets the lifetime
+        # counter at midnight (see commit 13b3a13). TOTAL handles those resets
+        # without HA recorder warnings while still feeding long-term statistics.
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
     ),
 )
 
@@ -93,11 +99,13 @@ INVERTER_SENSORS: tuple[SensorEntityDescription, ...] = (
         key="alarm_code",
         translation_key="alarm_code",
         state_class=None,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
         key="alarm_count",
         translation_key="alarm_count",
         state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 
@@ -129,13 +137,17 @@ PORT_SENSORS: tuple[SensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
     ),
     SensorEntityDescription(
         key="total_production",
         translation_key="total_production",
+        # See PLANT_SENSORS comment: TOTAL (not TOTAL_INCREASING) due to DTU
+        # midnight reset of the per-port lifetime counter (commit 13b3a13).
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
     ),
 )
 
