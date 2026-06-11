@@ -72,5 +72,15 @@
         }
       }
     }
+  },
+  "issues": {
+    "dtu_unreachable": {
+      "title": "DTU-Pro unreachable",
+      "description": "The DTU-Pro at `{host}` has been unreachable for more than 5 minutes. Check the DTU's power supply, network cable and that port 502 is open. The integration will recover automatically once Modbus polling succeeds again."
+    },
+    "inverter_offline_long": {
+      "title": "Inverter offline for over 6 hours",
+      "description": "Inverter `{serial}` has reported no RF link for more than 6 hours. Possible causes: panel shaded or covered, RF interference, defective inverter. Check the device page for the per-inverter `link` binary sensor and the most recent alarm code."
+    }
   }
 }

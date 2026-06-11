@@ -2,6 +2,15 @@
 
 Users can download a JSON snapshot from Settings → Devices & Services → ⋮ → Download diagnostics.
 The serial numbers are redacted to avoid leaking installation IDs in public bug reports.
+
+Sections:
+  * ``config_entry``      — generic title + non-PII config entry data.
+  * ``real_data`` / ``metadata`` — current PlantData snapshots from each coordinator.
+  * ``coordinator_state`` — runtime health: last update success/timestamps,
+    effective polling intervals, online inverter count.
+
+No raw Modbus frames or per-inverter timestamps are exposed (PR #2 scope —
+deliberately conservative on what gets dumped to a public issue tracker).
 """
 
 from __future__ import annotations
@@ -46,6 +55,35 @@ def _plant_to_dict(plant: PlantData) -> dict[str, Any]:
     }
 
 
+def _coordinator_state(real_coord: Any, metadata_coord: Any) -> dict[str, Any]:
+    """Per-coordinator runtime health snapshot.
+
+    Reports the *runtime* values (e.g. ``coordinator.update_interval``) rather
+    than the values stored in ``entry.data``. They can diverge — see the
+    pre-existing ``CONF_SCAN_INTERVAL_REAL_DATA`` saved-but-not-read issue
+    that PR #4 (OptionsFlow) will address.
+    """
+
+    def _summarise(coord: Any) -> dict[str, Any]:
+        last_ok = coord.last_update_success_time
+        return {
+            "last_update_success": coord.last_update_success,
+            "last_update_success_time": last_ok.isoformat() if last_ok else None,
+            "update_interval_seconds": (
+                coord.update_interval.total_seconds() if coord.update_interval else None
+            ),
+            "online_inverter_count": (
+                len(coord.data.online_inverters) if coord.data is not None else None
+            ),
+            "inverter_count": (coord.data.inverter_count if coord.data is not None else None),
+        }
+
+    return {
+        "real_data": _summarise(real_coord),
+        "metadata": _summarise(metadata_coord),
+    }
+
+
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: ConfigEntry
 ) -> dict[str, Any]:
@@ -65,5 +103,6 @@ async def async_get_config_entry_diagnostics(
         },
         "real_data": _plant_to_dict(real_coord.data) if real_coord.data else None,
         "metadata": _plant_to_dict(metadata_coord.data) if metadata_coord.data else None,
+        "coordinator_state": _coordinator_state(real_coord, metadata_coord),
     }
     return async_redact_data(payload, REDACT_KEYS)

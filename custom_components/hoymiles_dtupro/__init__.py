@@ -47,8 +47,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # FC3: ONE shared client across both coordinators.
     client = HoymilesAsyncClient(host=host, port=port, unit_id=unit_id)
 
-    real_data_coord = HoymilesRealDataCoordinator(hass, client)
-    metadata_coord = HoymilesMetadataCoordinator(hass, client)
+    real_data_coord = HoymilesRealDataCoordinator(hass, client, entry_id=entry.entry_id, host=host)
+    metadata_coord = HoymilesMetadataCoordinator(hass, client, entry_id=entry.entry_id)
 
     # Force initial fetches (raises ConfigEntryNotReady on failure).
     await real_data_coord.async_config_entry_first_refresh()
@@ -66,7 +66,31 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
+    """Unload a config entry.
+
+    Cleanup of Repair Issues created by the coordinators: even though
+    `is_persistent=False` issues are dropped at HA restart, an integration
+    *reload* (no full HA restart) would otherwise leave stale issues visible.
+    """
+    from homeassistant.helpers import issue_registry as ir
+
+    from .const import ISSUE_ID_DTU_UNREACHABLE, ISSUE_ID_INVERTER_OFFLINE
+
+    bundle = hass.data.get(DOMAIN, {}).get(entry.entry_id)
+    if bundle is not None:
+        # Clear the per-DTU unreachable issue.
+        ir.async_delete_issue(hass, DOMAIN, f"{ISSUE_ID_DTU_UNREACHABLE}_{entry.entry_id}")
+        # Clear every per-inverter offline issue that this metadata coordinator
+        # ever raised (or could have raised) for this entry.
+        metadata_coord = bundle.get("metadata")
+        if metadata_coord is not None:
+            for serial in metadata_coord.known_inverter_serials:
+                ir.async_delete_issue(
+                    hass,
+                    DOMAIN,
+                    f"{ISSUE_ID_INVERTER_OFFLINE}_{serial}_{entry.entry_id}",
+                )
+
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
         hass.data[DOMAIN].pop(entry.entry_id, None)

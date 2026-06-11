@@ -72,5 +72,15 @@
         }
       }
     }
+  },
+  "issues": {
+    "dtu_unreachable": {
+      "title": "DTU-Pro no accesible",
+      "description": "El DTU-Pro en `{host}` lleva más de 5 minutos sin responder. Comprueba la alimentación, el cable de red y que el puerto 502 esté abierto. La integración se recuperará automáticamente cuando las consultas Modbus vuelvan a tener éxito."
+    },
+    "inverter_offline_long": {
+      "title": "Inversor desconectado durante más de 6 horas",
+      "description": "El inversor `{serial}` lleva más de 6 horas sin enlace RF. Posibles causas: panel sombreado o cubierto, interferencias de radio, inversor defectuoso. Consulta la página del dispositivo para el `link` binary_sensor y el último código de alarma."
+    }
   }
 }

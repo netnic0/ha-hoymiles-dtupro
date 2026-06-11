@@ -72,5 +72,15 @@
         }
       }
     }
+  },
+  "issues": {
+    "dtu_unreachable": {
+      "title": "DTU-Pro injoignable",
+      "description": "Le DTU-Pro à `{host}` est injoignable depuis plus de 5 minutes. Vérifiez son alimentation, son câble réseau et que le port 502 est ouvert. L'intégration se rétablira automatiquement dès que les requêtes Modbus reprendront."
+    },
+    "inverter_offline_long": {
+      "title": "Onduleur hors ligne depuis plus de 6 heures",
+      "description": "L'onduleur `{serial}` ne répond plus à la liaison RF depuis plus de 6 heures. Causes possibles : panneau ombré ou recouvert, interférences radio, onduleur défectueux. Consultez la page de l'appareil pour le binary_sensor `link` et le dernier code d'alarme."
+    }
   }
 }
