@@ -63,7 +63,7 @@ views:
             chips:
               # Total plant power
               - type: entity
-                entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+                entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_instantanee
                 icon: mdi:solar-power-variant
                 icon_color: amber
                 tap_action:
@@ -71,7 +71,7 @@ views:
 
               # Today production
               - type: entity
-                entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_du_jour
+                entity: sensor.hoymiles_dtu_pro_<DTU_SN>_energie_du_jour
                 icon: mdi:counter
                 icon_color: orange
                 tap_action:
@@ -79,7 +79,7 @@ views:
 
               # Total lifetime production
               - type: entity
-                entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_totale
+                entity: sensor.hoymiles_dtu_pro_<DTU_SN>_energie_totale_cumul
                 icon: mdi:chart-line
                 icon_color: deep-orange
                 tap_action:
@@ -118,7 +118,7 @@ views:
             heading_style: title
 
           - type: custom:mushroom-entity-card
-            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_instantanee
             icon: mdi:lightning-bolt
             icon_color: amber
             primary_info: state
@@ -127,7 +127,7 @@ views:
               action: more-info
 
           - type: custom:mushroom-entity-card
-            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_du_jour
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_energie_du_jour
             icon: mdi:white-balance-sunny
             icon_color: orange
             primary_info: state
@@ -136,7 +136,7 @@ views:
               action: more-info
 
           - type: custom:mushroom-entity-card
-            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_production_totale
+            entity: sensor.hoymiles_dtu_pro_<DTU_SN>_energie_totale_cumul
             icon: mdi:sigma
             icon_color: deep-orange
             primary_info: state
@@ -216,7 +216,7 @@ views:
                 width: 2
             series:
               # Total plant power — area fill
-              - entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_pv
+              - entity: sensor.hoymiles_dtu_pro_<DTU_SN>_puissance_instantanee
                 name: Production PV
                 type: area
                 color: "#f59e0b"

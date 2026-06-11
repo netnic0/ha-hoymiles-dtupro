@@ -138,6 +138,47 @@ from [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **UX**: Energy sensors (`today_production`, `total_production`) now suggest
+  **kWh** as their display unit via `suggested_unit_of_measurement`. Storage
+  remains in Wh — historical data is unaffected, HA only adapts the displayed
+  unit so values like `9 935 738 Wh` show up as `9 935.7 kWh`.
+- **UX**: Diagnostic entities (`alarm_code`, `alarm_count`) are now categorised as
+  `EntityCategory.DIAGNOSTIC`. They appear under the device's *Diagnostics*
+  section instead of the main entity list. Existing automations that reference
+  these entities continue to work unchanged.
+- **i18n**: Sensor labels clarified for better semantic alignment with the
+  underlying physical quantity. The `key` of every entity is unchanged, so
+  **existing entity IDs are preserved** — only the *friendly name* shown in
+  the UI is updated:
+
+  | key                | EN              | FR                        | DE              | ES             |
+  |--------------------|-----------------|---------------------------|-----------------|----------------|
+  | `pv_power`         | Power           | Puissance instantanée     | Leistung        | Potencia       |
+  | `today_production` | Energy today    | Énergie du jour           | Energie heute   | Energía hoy    |
+  | `total_production` | Lifetime energy | Énergie totale (cumul)    | Gesamtenergie   | Energía total  |
+
+  **Note for new installs in French locale**: the new labels generate different
+  entity slugs (e.g. `sensor.<dtu>_energie_du_jour` instead of
+  `sensor.<dtu>_production_du_jour`). The bundled
+  `lovelace_examples/full.yaml` and `lovelace_examples/mushroom.yaml` have been
+  updated accordingly.
+
+### Added
+
+- Descriptor-level tests in `tests/test_sensor.py` lock down `state_class`,
+  `suggested_unit_of_measurement`, and `entity_category` for every sensor —
+  preventing accidental regressions on Energy-Dashboard semantics.
+
+### Not Changed (intentional)
+
+- `state_class` of `total_production` remains `TOTAL` (not `TOTAL_INCREASING`).
+  Reason: the Hoymiles DTU resets the per-port lifetime counter at midnight
+  (see commit `13b3a13`). `TOTAL_INCREASING` would trigger HA recorder warnings
+  on each reset; `TOTAL` handles this correctly while still feeding long-term
+  statistics.
+
 ## [0.1.0-alpha.1] — 2026-06-04
 
 ### Added

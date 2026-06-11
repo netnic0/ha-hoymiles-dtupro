@@ -41,9 +41,9 @@
   },
   "entity": {
     "sensor": {
-      "pv_power": { "name": "PV power" },
-      "today_production": { "name": "Today's production" },
-      "total_production": { "name": "Total production" },
+      "pv_power": { "name": "Power" },
+      "today_production": { "name": "Energy today" },
+      "total_production": { "name": "Lifetime energy" },
       "temperature": { "name": "Temperature" },
       "grid_voltage": { "name": "Grid voltage" },
       "grid_frequency": { "name": "Grid frequency" },

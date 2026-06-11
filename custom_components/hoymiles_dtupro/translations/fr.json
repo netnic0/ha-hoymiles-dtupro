@@ -41,9 +41,9 @@
   },
   "entity": {
     "sensor": {
-      "pv_power": { "name": "Puissance PV" },
-      "today_production": { "name": "Production du jour" },
-      "total_production": { "name": "Production totale" },
+      "pv_power": { "name": "Puissance instantanée" },
+      "today_production": { "name": "Énergie du jour" },
+      "total_production": { "name": "Énergie totale (cumul)" },
       "temperature": { "name": "Température" },
       "grid_voltage": { "name": "Tension réseau" },
       "grid_frequency": { "name": "Fréquence réseau" },

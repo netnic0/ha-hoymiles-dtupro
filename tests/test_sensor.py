@@ -6,6 +6,9 @@ from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from homeassistant.components.sensor import SensorStateClass
+from homeassistant.const import UnitOfEnergy
+from homeassistant.helpers.entity import EntityCategory
 
 from custom_components.hoymiles_dtupro.sensor import (
     INVERTER_SENSORS,
@@ -155,3 +158,62 @@ def test_port_sensor_returns_none_for_unknown_serial(
     sensor._port_number = 1
 
     assert sensor.native_value is None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Descriptor-level assertions: lock down state_class, suggested_unit_of_measurement
+# and entity_category so future refactors of the SensorEntityDescription tuples
+# cannot regress the Energy-Dashboard semantics or the Diagnostics categorisation.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("sensors", "key"),
+    [
+        (PLANT_SENSORS, "today_production"),
+        (PLANT_SENSORS, "total_production"),
+        (PORT_SENSORS, "today_production"),
+        (PORT_SENSORS, "total_production"),
+    ],
+)
+def test_energy_sensors_suggest_kwh_display(sensors, key) -> None:
+    """Energy sensors store in Wh but suggest kWh for display readability."""
+    desc = next(d for d in sensors if d.key == key)
+    assert desc.native_unit_of_measurement == UnitOfEnergy.WATT_HOUR
+    assert desc.suggested_unit_of_measurement == UnitOfEnergy.KILO_WATT_HOUR
+
+
+@pytest.mark.parametrize("sensors", [PLANT_SENSORS, PORT_SENSORS])
+def test_total_production_uses_state_class_total(sensors) -> None:
+    """`total_production` keeps state_class TOTAL (not TOTAL_INCREASING).
+
+    The Hoymiles DTU resets the per-port lifetime counter at midnight, which
+    would trigger HA recorder warnings with TOTAL_INCREASING. See commit 13b3a13.
+    """
+    desc = next(d for d in sensors if d.key == "total_production")
+    assert desc.state_class == SensorStateClass.TOTAL
+
+
+@pytest.mark.parametrize("sensors", [PLANT_SENSORS, PORT_SENSORS])
+def test_today_production_uses_total_increasing(sensors) -> None:
+    """`today_production` resets at midnight (intentional) — TOTAL_INCREASING fits."""
+    desc = next(d for d in sensors if d.key == "today_production")
+    assert desc.state_class == SensorStateClass.TOTAL_INCREASING
+
+
+@pytest.mark.parametrize("key", ["alarm_code", "alarm_count"])
+def test_alarm_sensors_are_diagnostic(key) -> None:
+    """Alarm entities are operational diagnostics, hidden from main entity list."""
+    desc = next(d for d in INVERTER_SENSORS if d.key == key)
+    assert desc.entity_category == EntityCategory.DIAGNOSTIC
+
+
+def test_no_unexpected_diagnostic_categorisation() -> None:
+    """Only the alarm sensors should be marked DIAGNOSTIC — not energy or power."""
+    diagnostic_keys = {
+        d.key
+        for sensors in (PLANT_SENSORS, INVERTER_SENSORS, PORT_SENSORS)
+        for d in sensors
+        if d.entity_category == EntityCategory.DIAGNOSTIC
+    }
+    assert diagnostic_keys == {"alarm_code", "alarm_count"}
