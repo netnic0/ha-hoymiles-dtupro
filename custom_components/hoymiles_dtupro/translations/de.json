@@ -72,5 +72,15 @@
         }
       }
     }
+  },
+  "issues": {
+    "dtu_unreachable": {
+      "title": "DTU-Pro nicht erreichbar",
+      "description": "Der DTU-Pro unter `{host}` ist seit mehr als 5 Minuten nicht erreichbar. Prüfen Sie Stromversorgung, Netzwerkkabel und ob Port 502 offen ist. Die Integration erholt sich automatisch, sobald die Modbus-Abfragen wieder erfolgreich sind."
+    },
+    "inverter_offline_long": {
+      "title": "Wechselrichter seit über 6 Stunden offline",
+      "description": "Wechselrichter `{serial}` hat seit mehr als 6 Stunden keine RF-Verbindung gemeldet. Mögliche Ursachen: verschattetes oder abgedecktes Modul, RF-Störungen, defekter Wechselrichter. Prüfen Sie auf der Geräteseite den `link`-Binärsensor und den aktuellen Alarmcode."
+    }
   }
 }

@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Repair Issues** powered by `homeassistant.helpers.issue_registry`:
+  - `dtu_unreachable_<entry_id>` — fires (severity ERROR) when the DTU has not
+    answered for more than **5 minutes**, and is automatically cleared on the
+    next successful poll.
+  - `inverter_offline_<serial>_<entry_id>` — fires (severity WARNING) per
+    inverter once `link_status=False` has held continuously for more than
+    **6 hours**. **Guard:** an inverter that has *never* been observed online
+    since this integration load will not raise the issue — this prevents
+    false positives on freshly added hardware.
+- **Diagnostics enriched** with a new `coordinator_state` section exposing,
+  for each coordinator, the runtime values of `last_update_success`,
+  `last_update_success_time`, `update_interval_seconds`, `online_inverter_count`,
+  and `inverter_count`.
+- New translation keys (`issues.dtu_unreachable`, `issues.inverter_offline_long`)
+  in `strings.json` and all four bundled languages (EN/FR/DE/ES).
+- Extensive `tests/test_repairs.py` covering: below-threshold no-op, above-threshold
+  fire, recovery clears, never-seen-online guard.
+
+### Changed
+
+- **Coordinators migrated** from `DataUpdateCoordinator` to
+  `TimestampDataUpdateCoordinator`. This is the HA-blessed base class that
+  exposes `last_update_success_time` natively — required to compute the
+  unreachable threshold without reinventing state tracking.
+- Coordinator constructors now require `entry_id` (and `host` for the real-data
+  coordinator). This change is internal: external callers must pass these
+  values when instantiating coordinators directly. The integration's
+  `async_setup_entry` is updated accordingly.
+- `async_unload_entry` now calls `async_delete_issue` for every Repair Issue
+  the integration could have raised, preventing stale issue cards after an
+  integration reload.
+
+### Not Changed (intentional)
+
+- Thresholds (5 min / 6 h) are hardcoded in `const.py`. PR #4 (OptionsFlow)
+  will make them user-configurable.
+- Diagnostics deliberately omit raw Modbus frames and per-inverter
+  `_last_seen_online` timestamps to avoid leaking installation-specific data
+  in public bug reports.
+
 ## [1.3.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.2.0...v1.3.0) (2026-06-05)
 
 

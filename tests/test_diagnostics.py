@@ -104,3 +104,36 @@ async def test_diagnostics_handles_coordinator_with_no_data(
 
     assert payload["real_data"] is not None
     assert payload["metadata"] is None
+
+
+@pytest.mark.asyncio
+async def test_diagnostics_includes_coordinator_state(
+    hass: HomeAssistant,
+    enable_custom_integrations,
+    mock_config_entry: MockConfigEntry,
+    mock_plant_data: PlantData,
+) -> None:
+    """Diagnostics expose runtime health (last update, intervals, online count)."""
+    mock_config_entry.add_to_hass(hass)
+    fake_client = AsyncMock()
+    fake_client.async_get_plant_data = AsyncMock(return_value=mock_plant_data)
+
+    with patch(_CLIENT_PATH, return_value=fake_client):
+        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+        payload = await async_get_config_entry_diagnostics(hass, mock_config_entry)
+
+    coord_state = payload.get("coordinator_state")
+    assert coord_state is not None, "coordinator_state section must be present"
+
+    for slot in ("real_data", "metadata"):
+        section = coord_state[slot]
+        assert section["last_update_success"] is True
+        # ISO-formatted timestamp string after a successful first refresh.
+        assert isinstance(section["last_update_success_time"], str)
+        assert section["last_update_success_time"].endswith("+00:00")
+        # Update intervals are positive numbers reflecting the runtime values.
+        assert section["update_interval_seconds"] > 0
+        # Online inverter count agrees with the snapshot (every inv is online by default).
+        assert section["online_inverter_count"] == len(mock_plant_data.online_inverters)
+        assert section["inverter_count"] == mock_plant_data.inverter_count
