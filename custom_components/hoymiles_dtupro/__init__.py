@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING
 from .const import (
     CONF_BACKOFF_INITIAL_S,
     CONF_BACKOFF_MAX_S,
+    CONF_CO2_FACTOR_KG_PER_KWH,
     CONF_DTU_UNREACHABLE_THRESHOLD_MIN,
     CONF_HOST,
     CONF_INVERTER_OFFLINE_THRESHOLD_H,
@@ -29,13 +30,16 @@ from .const import (
     CONF_SCAN_INTERVAL_METADATA,
     CONF_SCAN_INTERVAL_REAL_DATA,
     CONF_TIMEOUT_S,
+    CONF_TREE_KG_CO2_PER_YEAR,
     CONF_UNIT_ID,
     DEFAULT_BACKOFF_INITIAL_S,
     DEFAULT_BACKOFF_MAX_S,
+    DEFAULT_CO2_FACTOR_KG_PER_KWH,
     DEFAULT_RETRY_ATTEMPTS,
     DEFAULT_SCAN_INTERVAL_METADATA,
     DEFAULT_SCAN_INTERVAL_REAL_DATA,
     DEFAULT_TIMEOUT_S,
+    DEFAULT_TREE_KG_CO2_PER_YEAR,
     DOMAIN,
     ISSUE_DTU_UNREACHABLE_THRESHOLD,
     ISSUE_INVERTER_OFFLINE_THRESHOLD,
@@ -198,6 +202,14 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         to `entry.options`. The key was previously collected by the user step
         but never consumed by `async_setup_entry` (latent bug), so existing
         users see no behavior change beyond the value finally being honoured.
+      * 1.2 → 1.3 (PR #6c): inject default `co2_factor_kg_per_kwh` and
+        `tree_kg_co2_per_year` into `entry.options` so the new environmental
+        impact sensors can read them without requiring the user to walk
+        through the OptionsFlow.
+
+    The two branches below are INDEPENDENT `if` blocks (NOT chained `elif`)
+    so that an entry created in v1.0 (minor_version=1) traverses both
+    migrations within a single call: first to v1.2, then to v1.3.
     """
     _LOGGER.debug(
         "Checking migration for entry %s (version=%s minor=%s)",
@@ -223,6 +235,22 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
         _LOGGER.info(
             "Migrated Hoymiles DTU-Pro entry %s to v1.2 (scan_interval_real_data moved to options)",
+            entry.entry_id,
+        )
+
+    if entry.version == 1 and entry.minor_version == 2:
+        new_options = dict(entry.options)
+        new_options.setdefault(CONF_CO2_FACTOR_KG_PER_KWH, DEFAULT_CO2_FACTOR_KG_PER_KWH)
+        new_options.setdefault(CONF_TREE_KG_CO2_PER_YEAR, DEFAULT_TREE_KG_CO2_PER_YEAR)
+
+        hass.config_entries.async_update_entry(
+            entry,
+            options=new_options,
+            minor_version=3,
+            version=1,
+        )
+        _LOGGER.info(
+            "Migrated Hoymiles DTU-Pro entry %s to v1.3 (added CO2/tree factor defaults)",
             entry.entry_id,
         )
 
