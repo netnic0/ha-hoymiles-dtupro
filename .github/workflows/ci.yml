@@ -54,10 +54,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      # Mypy is intentionally scoped to the pure api package only — the HA layer
-      # is exercised by HA-native tests in milestone M2.
-      - name: mypy custom_components/hoymiles_dtupro/api
-        run: mypy custom_components/hoymiles_dtupro/api
+      # Mypy is scoped to the full integration package (HA layer + api) since
+      # PR #5b. HA core / voluptuous / pymodbus imports are silenced via
+      # pyproject.toml [[tool.mypy.overrides]].
+      - name: mypy custom_components/hoymiles_dtupro
+        run: mypy custom_components/hoymiles_dtupro
 
   test:
     name: Test pure-lib (Python ${{ matrix.python-version }})

@@ -22,6 +22,11 @@
           "host": "Host or IP address",
           "port": "Modbus TCP port",
           "unit_id": "Modbus unit ID"
+        },
+        "data_description": {
+          "host": "Local IP of the DTU-Pro (e.g. 192.0.2.1).",
+          "port": "Default Modbus TCP port is 502.",
+          "unit_id": "Modbus slave ID. Default is 1; change only if you know what you're doing."
         }
       }
     },

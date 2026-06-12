@@ -25,6 +25,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import (
+    EntityCategory,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
@@ -32,7 +33,6 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.helpers.entity import EntityCategory
 
 from .api import PlantData
 from .const import DOMAIN
@@ -42,6 +42,15 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+    from .coordinator import HoymilesRealDataCoordinator
+
+
+# Silver quality_scale: declare that this platform imposes no concurrency limit
+# of its own. The DataUpdateCoordinator already serialises Modbus polling via
+# its internal lock and the client mutex, so platform-level throttling would be
+# redundant. 0 = "as many parallel updates as the entity registry chooses".
+PARALLEL_UPDATES = 0
 
 
 PLANT_SENSORS: tuple[SensorEntityDescription, ...] = (
@@ -157,7 +166,9 @@ class HoymilesPlantSensor(HoymilesPlantEntity, SensorEntity):
 
     entity_description: SensorEntityDescription
 
-    def __init__(self, coordinator, description: SensorEntityDescription) -> None:
+    def __init__(
+        self, coordinator: HoymilesRealDataCoordinator, description: SensorEntityDescription
+    ) -> None:
         super().__init__(
             coordinator, translation_key=description.translation_key or description.key
         )
@@ -178,7 +189,10 @@ class HoymilesInverterSensor(HoymilesInverterEntity, SensorEntity):
     entity_description: SensorEntityDescription
 
     def __init__(
-        self, coordinator, inverter_serial: str, description: SensorEntityDescription
+        self,
+        coordinator: HoymilesRealDataCoordinator,
+        inverter_serial: str,
+        description: SensorEntityDescription,
     ) -> None:
         super().__init__(
             coordinator,
@@ -207,7 +221,7 @@ class HoymilesInverterPortSensor(HoymilesInverterEntity, SensorEntity):
 
     def __init__(
         self,
-        coordinator,
+        coordinator: HoymilesRealDataCoordinator,
         inverter_serial: str,
         port_number: int,
         description: SensorEntityDescription,

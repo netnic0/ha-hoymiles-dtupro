@@ -22,6 +22,11 @@
           "host": "Hôte ou adresse IP",
           "port": "Port Modbus TCP",
           "unit_id": "Identifiant Modbus (unit ID)"
+        },
+        "data_description": {
+          "host": "Adresse IP locale du DTU-Pro (ex. 192.0.2.1).",
+          "port": "Le port Modbus TCP par défaut est 502.",
+          "unit_id": "ID esclave Modbus. Par défaut 1 ; ne modifier qu'en connaissance de cause."
         }
       }
     },

@@ -185,9 +185,11 @@ class HoymilesAsyncClient:
             # deterministic frames; retrying wastes wall-clock time.
         # `last_err` is always set: the loop runs >= 1 time and every except
         # branch assigns it before `break`. mypy cannot prove this across loop
-        # iterations (the [misc] suppression silences the resulting "raising a
-        # possibly-None value" warning, NOT a real bug).
-        raise last_err  # type: ignore[misc]
+        # iterations, so the explicit assertion makes the invariant a runtime
+        # AND static-type guarantee — no [misc] / [union-attr] suppression
+        # required, even if we ever re-enable those error codes globally.
+        assert last_err is not None
+        raise last_err
 
     # ─── Internal helpers ─────────────────────────────────────────────────
     async def _open(self) -> AsyncModbusTcpClient:

@@ -25,6 +25,13 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+    from .coordinator import HoymilesRealDataCoordinator
+
+
+# Silver quality_scale: see sensor.py for the rationale. The coordinator owns
+# concurrency control; this platform delegates the decision to HA core.
+PARALLEL_UPDATES = 0
+
 
 ALARM_DESC = BinarySensorEntityDescription(
     key="alarm",
@@ -42,7 +49,9 @@ LINK_DESC = BinarySensorEntityDescription(
 class HoymilesAlarmBinarySensor(HoymilesPlantEntity, BinarySensorEntity):
     """True iff any online inverter is reporting an alarm."""
 
-    def __init__(self, coordinator) -> None:
+    entity_description: BinarySensorEntityDescription
+
+    def __init__(self, coordinator: HoymilesRealDataCoordinator) -> None:
         super().__init__(coordinator, translation_key="alarm")
         self.entity_description = ALARM_DESC
 
@@ -55,7 +64,9 @@ class HoymilesAlarmBinarySensor(HoymilesPlantEntity, BinarySensorEntity):
 class HoymilesLinkBinarySensor(HoymilesInverterEntity, BinarySensorEntity):
     """Per-inverter RF link reachability."""
 
-    def __init__(self, coordinator, inverter_serial: str) -> None:
+    entity_description: BinarySensorEntityDescription
+
+    def __init__(self, coordinator: HoymilesRealDataCoordinator, inverter_serial: str) -> None:
         super().__init__(coordinator, inverter_serial, translation_key="link")
         self.entity_description = LINK_DESC
 
@@ -73,6 +84,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
+    """Register all binary_sensor entities for this config entry."""
     bundle = hass.data[DOMAIN][entry.entry_id]
     real_coord = bundle["real_data"]
     plant: PlantData = real_coord.data
