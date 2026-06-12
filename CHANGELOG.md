@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.8.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.7.0...v1.8.0) (2026-06-12)
+
+
+### Features
+
+* **quality:** bump quality_scale to silver + add quality_scale.yaml ([35ab547](https://github.com/netnic0/ha-hoymiles-dtupro/commit/35ab547ced67757149b9ad91d27fc9a0ee60a8f5))
+
+
+### Bug Fixes
+
+* **ci:** scope HA-native coverage to the HA layer only ([bfb1bf2](https://github.com/netnic0/ha-hoymiles-dtupro/commit/bfb1bf2a2976203c06762ac7737c8955a5cc1247))
+
+
+### Documentation
+
+* **changelog:** refresh [Unreleased] block for PR [#5](https://github.com/netnic0/ha-hoymiles-dtupro/issues/5)c ([34dc03c](https://github.com/netnic0/ha-hoymiles-dtupro/commit/34dc03ce28d792b2b7b9823d8d2078659e46d5c2))
+
 ## [1.7.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.6.1...v1.7.0) (2026-06-12)
 
 
