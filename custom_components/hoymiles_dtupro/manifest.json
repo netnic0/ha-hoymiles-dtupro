@@ -13,7 +13,7 @@
     "custom_components.hoymiles_dtupro",
     "pymodbus"
   ],
-  "quality_scale": "bronze",
+  "quality_scale": "silver",
   "requirements": [
     "pymodbus>=3.6,<4.0"
   ],
