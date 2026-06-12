@@ -70,8 +70,34 @@ def inverter_register_count() -> int:
 # --- HA-native fixtures -------------------------------------------------------
 #
 # These rely on pytest-homeassistant-custom-component (PHCC) being installed.
-# Tests that need them must also explicitly request the `enable_custom_integrations`
-# PHCC fixture (per M1-D4) so the custom component loader picks up our manifest.
+# The `enable_custom_integrations` PHCC fixture is autouse'd below so HA can
+# resolve our domain via `async_get_integration("hoymiles_dtupro")` whenever a
+# test triggers the config-/options-flow handler loader. Without it, calls
+# like `hass.config_entries.options.async_init(entry_id)` raise UnknownHandler
+# (CI bug surfaced by PR #5a — see GitHub run #47 of branch fix/pr5a-ci-hygiene).
+#
+# Pure-library tests that never request the `hass` fixture are unaffected: PHCC
+# implements `enable_custom_integrations` as a yield-only fixture with no side
+# effects when no Home Assistant instance is involved.
+
+
+@pytest.fixture(autouse=True)
+def auto_enable_custom_integrations(
+    request: pytest.FixtureRequest,
+) -> Iterator[None]:
+    """Autouse wrapper around PHCC's `enable_custom_integrations`.
+
+    We only activate the fixture when a test requests `hass` (or a fixture that
+    transitively brings `hass` in) — this keeps pure-library tests free from
+    the PHCC import cost and avoids spurious dependency on `hass` for offline
+    tests.
+    """
+    if "hass" not in request.fixturenames:
+        yield
+        return
+
+    enable = request.getfixturevalue("enable_custom_integrations")
+    yield enable
 
 
 @pytest.fixture
