@@ -22,6 +22,43 @@ temperature, grid data, alarm, and RF link status).
 
 ---
 
+## Compatible devices
+
+### Officially supported (tested)
+
+| Device | Firmware | Status |
+|---|---|---|
+| **Hoymiles DTU-Pro** | V00.07.04 | ✅ Fully tested (HMS-1000-2T, 7 inverters / 14 panels) |
+
+### Likely compatible (not yet tested — reports welcome)
+
+These devices are reported by the broader Hoymiles community to expose the same
+Modbus TCP register map. The integration **should** work out of the box; please
+[open an issue][issues-url] with your model + firmware version + a diagnostics
+export so we can confirm and add it to the tested list.
+
+| Device | Notes |
+|---|---|
+| **DTU-Pro-S** | Newer hardware revision of DTU-Pro, same Modbus TCP server. Confirmed working in upstream community projects. |
+| **DTU-W100 / DTU-W100G2** | May expose Modbus TCP depending on firmware revision. |
+| **DTU-G100** | Same family; register map likely compatible — to verify. |
+| **DTU-Pro v2** | If commercialised — same protocol expected. |
+
+### Not compatible
+
+| Device | Why | Alternative |
+|---|---|---|
+| **HMS-WiFi inverters** *(no DTU)* | Speak Hoymiles Protobuf TCP, not Modbus TCP | [`suaveolent/ha-hoymiles-wifi`][suav-url] |
+| **DTU-Lite** | Older hardware; may lack a Modbus TCP server | — |
+
+> **Adapting to a different DTU**: the protocol code lives in the pure-async
+> [`api/`](custom_components/hoymiles_dtupro/api/) sub-package. Most variations
+> would amount to register-address overrides in
+> [`api/const.py`](custom_components/hoymiles_dtupro/api/const.py) — pull
+> requests welcome.
+
+---
+
 ## What this integration does
 
 - Polls a Hoymiles **DTU-Pro** gateway over **Modbus TCP** (port 502 by default).
@@ -59,9 +96,8 @@ Both are credited in [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
   as the DTU).
 - Up to **100 inverters** (sentinel-terminated scan; the integration caches
   the inverter count after the first scan to keep cycles short).
-- Tested against an HMS-1000-2T plant (7 inverters / 14 panels). Other Hoymiles
-  HM/MI-series inverters connected to a DTU-Pro should work; please report
-  back so the compatibility list can be expanded.
+
+For other Hoymiles DTU models, see [Compatible devices](#compatible-devices) above.
 
 ---
 
@@ -100,6 +136,10 @@ No YAML required.
 
 Reconfiguring (host changed, scan interval tuning) is done via the
 *"Configure"* button on the integration card — entities are preserved.
+
+> 📘 **Energy reporting**: for daily / monthly / yearly totals on the HA Energy
+> dashboard, see the dedicated guide
+> [`docs/utility_meter.md`](docs/utility_meter.md).
 
 ---
 
