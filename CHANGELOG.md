@@ -62,43 +62,38 @@ from [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
-- **Documentation — `docs/utility_meter.md`**: dedicated guide for setting
-  up daily / monthly / yearly energy reporting on the HA Energy dashboard
-  via the built-in `utility_meter` integration. Three worked examples
-  (per-MPPT-port, per-inverter via template sensor, whole-plant) and a
-  caveat block explaining why the `state_class: total` we declare on
-  lifetime sensors composes correctly with `utility_meter`.
-- **README — Compatible devices** section: now explicit about the
-  officially supported model (DTU-Pro V00.07.04 / HMS-1000-2T plant),
-  the likely-compatible community-reported list (DTU-Pro-S, DTU-W100,
-  DTU-G100, DTU-Pro v2), and the known-incompatible models with their
-  alternatives (HMS-WiFi → suaveolent/ha-hoymiles-wifi, DTU-Lite).
+- **Silver quality_scale tier 🥈** — `manifest.json` now declares
+  `"quality_scale": "silver"`, backed by the new
+  `custom_components/hoymiles_dtupro/quality_scale.yaml` checklist
+  documenting the status of all 28 Bronze + Silver rules (26 `done`,
+  2 `exempt` with justification: `action-exceptions` for the placeholder
+  service and `reauthentication-flow` for this no-auth Modbus integration).
+- **HA-native test coverage ≥ 95 %** on the integration's HA layer
+  (`__init__`, `binary_sensor`, `config_flow`, `coordinator`,
+  `diagnostics`, `entity`, `sensor`, `const`). Seven new tests across
+  two new files:
+  - `tests/test_init_coverage.py` — options-update listener triggers
+    reload, `async_unload_entry` handles a missing bundle gracefully,
+    `async_unload_entry` deletes per-inverter Repair Issues for every
+    serial known to the metadata coordinator.
+  - `tests/test_config_flow_coverage.py` — `HoymilesMetadataCoordinator`
+    wraps `HoymilesError` into `UpdateFailed` with proper `__cause__`
+    chain (HA depends on this for retry/backoff scheduling); the
+    reconfigure step surfaces `cannot_connect` on `HoymilesError`,
+    `unknown` on arbitrary exceptions, and updates `entry.data` with
+    `reconfigure_successful` on the happy path.
 
 ### Changed
 
-- **Mypy strict mode** now scopes the **full integration package**
-  (`custom_components/hoymiles_dtupro/`), not just the pure-api sub-package.
-  Untyped HA core / voluptuous / pymodbus imports are silenced via
-  `disable_error_code = ["import-not-found", "import-untyped"]` and
-  per-module overrides — same approach as Home Assistant core's own
-  `mypy.ini`. CI now runs `mypy custom_components/hoymiles_dtupro` so
-  annotation drift in the HA layer is caught alongside the api drift.
-- **`PARALLEL_UPDATES = 0`** declared at module level in `sensor.py` and
-  `binary_sensor.py`. Required by the **Silver** quality_scale tier.
-  The DataUpdateCoordinator already serialises Modbus polling, so this
-  declaration delegates the parallelism decision to HA core rather than
-  imposing a redundant platform-level limit.
-- **`HoymilesAlarmBinarySensor` and `HoymilesLinkBinarySensor`** now
-  declare a class-level `entity_description: BinarySensorEntityDescription`
-  annotation, mirroring the pattern already used in the sensor platform.
-  Required for mypy strict to accept the `__init__` assignment.
-
-### i18n
-
-- **`reconfigure` step** in `strings.json` and the four translations
-  (EN/FR/DE/ES) now ships a full `data_description` block (host / port /
-  unit_id) — mirrors the `user` step's hints. Required for the Silver
-  `docs-configuration-parameters` rule.
+- **CI HA-native coverage scope tightened**. The `test-ha` job's
+  `--cov` arg is now an explicit list of HA-layer modules
+  (`__init__`, `binary_sensor`, `config_flow`, `const`, `coordinator`,
+  `diagnostics`, `entity`, `sensor`), not the whole package. The
+  api/ sub-package is mocked in HA-native tests and would otherwise
+  drag the score down (mocked-out modules read as low coverage). It
+  is already covered by the separate `test` job with its own
+  `--cov-fail-under=80`. Coverage floor for `test-ha` raised from
+  `60 %` to `95 %` to enforce the Silver gate.
 
 ## [1.4.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.3.0...v1.4.0) (2026-06-11)
 
