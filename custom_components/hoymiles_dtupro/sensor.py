@@ -25,6 +25,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import (
+    EntityCategory,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
@@ -32,7 +33,6 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.helpers.entity import EntityCategory
 
 from .api import PlantData
 from .const import DOMAIN
@@ -161,7 +161,7 @@ PORT_SENSORS: tuple[SensorEntityDescription, ...] = (
 )
 
 
-class HoymilesPlantSensor(HoymilesPlantEntity, SensorEntity):  # type: ignore[misc]
+class HoymilesPlantSensor(HoymilesPlantEntity, SensorEntity):
     """A plant-level numeric sensor aggregated across all online inverters."""
 
     entity_description: SensorEntityDescription
@@ -180,7 +180,7 @@ class HoymilesPlantSensor(HoymilesPlantEntity, SensorEntity):  # type: ignore[mi
         return getattr(data, self.entity_description.key, None)
 
 
-class HoymilesInverterSensor(HoymilesInverterEntity, SensorEntity):  # type: ignore[misc]
+class HoymilesInverterSensor(HoymilesInverterEntity, SensorEntity):
     """A per-inverter sensor for port-agnostic fields (temperature, grid, alarms).
 
     Reads from port_number == 1 since those fields are identical across ports.
@@ -210,7 +210,7 @@ class HoymilesInverterSensor(HoymilesInverterEntity, SensorEntity):  # type: ign
         return None
 
 
-class HoymilesInverterPortSensor(HoymilesInverterEntity, SensorEntity):  # type: ignore[misc]
+class HoymilesInverterPortSensor(HoymilesInverterEntity, SensorEntity):
     """A per-MPPT-port sensor for PV-side measurements.
 
     HMS-1000-2T has 2 MPPT inputs; unique_id includes the port number so HA

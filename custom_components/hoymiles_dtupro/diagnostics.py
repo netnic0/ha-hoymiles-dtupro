@@ -105,4 +105,4 @@ async def async_get_config_entry_diagnostics(
         "metadata": _plant_to_dict(metadata_coord.data) if metadata_coord.data else None,
         "coordinator_state": _coordinator_state(real_coord, metadata_coord),
     }
-    return async_redact_data(payload, REDACT_KEYS)  # type: ignore[no-any-return]
+    return async_redact_data(payload, REDACT_KEYS)

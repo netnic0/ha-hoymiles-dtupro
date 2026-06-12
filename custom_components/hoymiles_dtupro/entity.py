@@ -17,14 +17,18 @@ from .api import PlantData
 from .const import DOMAIN
 
 if TYPE_CHECKING:
-    from .coordinator import (
-        HoymilesMetadataCoordinator,
-        HoymilesRealDataCoordinator,
-    )
+    from .coordinator import HoymilesMetadataCoordinator, HoymilesRealDataCoordinator
 
 
-class HoymilesPlantEntity(CoordinatorEntity[PlantData]):  # type: ignore[misc]
-    """An entity attached to the DTU device itself (whole plant aggregates)."""
+class HoymilesPlantEntity(
+    CoordinatorEntity["HoymilesRealDataCoordinator | HoymilesMetadataCoordinator"]
+):
+    """An entity attached to the DTU device itself (whole plant aggregates).
+
+    Generic over the *coordinator class* (Union of the real-data and metadata
+    coordinators), per the upstream
+    `homeassistant.helpers.update_coordinator.CoordinatorEntity` contract.
+    """
 
     _attr_has_entity_name = True
 
@@ -34,7 +38,8 @@ class HoymilesPlantEntity(CoordinatorEntity[PlantData]):  # type: ignore[misc]
         translation_key: str,
     ) -> None:
         super().__init__(coordinator)
-        self._dtu_serial = coordinator.data.dtu_serial
+        plant: PlantData = coordinator.data
+        self._dtu_serial = plant.dtu_serial
         self._attr_translation_key = translation_key
         self._attr_unique_id = f"{self._dtu_serial}_{translation_key}"
         self._attr_device_info = DeviceInfo(
@@ -45,7 +50,9 @@ class HoymilesPlantEntity(CoordinatorEntity[PlantData]):  # type: ignore[misc]
         )
 
 
-class HoymilesInverterEntity(CoordinatorEntity[PlantData]):  # type: ignore[misc]
+class HoymilesInverterEntity(
+    CoordinatorEntity["HoymilesRealDataCoordinator | HoymilesMetadataCoordinator"]
+):
     """An entity attached to a single inverter, parented to the DTU."""
 
     _attr_has_entity_name = True
@@ -57,7 +64,8 @@ class HoymilesInverterEntity(CoordinatorEntity[PlantData]):  # type: ignore[misc
         translation_key: str,
     ) -> None:
         super().__init__(coordinator)
-        self._dtu_serial = coordinator.data.dtu_serial
+        plant: PlantData = coordinator.data
+        self._dtu_serial = plant.dtu_serial
         self._inverter_serial = inverter_serial
         self._attr_translation_key = translation_key
         self._attr_unique_id = f"{inverter_serial}_{translation_key}"

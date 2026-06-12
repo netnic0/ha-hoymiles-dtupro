@@ -46,7 +46,7 @@ LINK_DESC = BinarySensorEntityDescription(
 )
 
 
-class HoymilesAlarmBinarySensor(HoymilesPlantEntity, BinarySensorEntity):  # type: ignore[misc]
+class HoymilesAlarmBinarySensor(HoymilesPlantEntity, BinarySensorEntity):
     """True iff any online inverter is reporting an alarm."""
 
     entity_description: BinarySensorEntityDescription
@@ -61,7 +61,7 @@ class HoymilesAlarmBinarySensor(HoymilesPlantEntity, BinarySensorEntity):  # typ
         return data.alarm_flag
 
 
-class HoymilesLinkBinarySensor(HoymilesInverterEntity, BinarySensorEntity):  # type: ignore[misc]
+class HoymilesLinkBinarySensor(HoymilesInverterEntity, BinarySensorEntity):
     """Per-inverter RF link reachability."""
 
     entity_description: BinarySensorEntityDescription
