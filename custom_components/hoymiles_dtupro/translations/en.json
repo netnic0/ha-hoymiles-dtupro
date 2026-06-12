@@ -54,7 +54,9 @@
           "backoff_initial_s": "Initial retry backoff (seconds)",
           "backoff_max_s": "Maximum retry backoff (seconds)",
           "dtu_unreachable_threshold_min": "DTU unreachable alert threshold (minutes)",
-          "inverter_offline_threshold_h": "Inverter offline alert threshold (hours)"
+          "inverter_offline_threshold_h": "Inverter offline alert threshold (hours)",
+          "co2_factor_kg_per_kwh": "CO2 emission factor (kg CO2 per kWh)",
+          "tree_kg_co2_per_year": "CO2 absorbed per young planted tree per year (kg)"
         },
         "data_description": {
           "scan_interval_real_data": "How often to fetch live power/voltage/current data. Minimum 10 s, default 60 s. Lower values stress the DTU.",
@@ -64,7 +66,9 @@
           "backoff_initial_s": "Delay before the first retry. Default 0.5 s. The delay doubles after each failed attempt up to the maximum.",
           "backoff_max_s": "Upper bound for the exponential backoff. Default 4 s. Must be at least equal to the initial backoff.",
           "dtu_unreachable_threshold_min": "How long the DTU must be silent before raising a Repair Issue. Note: after a settings change, this counter is reset — the issue cannot fire until at least one successful poll occurs and is then followed by the threshold of silence.",
-          "inverter_offline_threshold_h": "How long an inverter must report no RF link before raising a Repair Issue. Reset on integration reload — the timer restarts after every options change."
+          "inverter_offline_threshold_h": "How long an inverter must report no RF link before raising a Repair Issue. Reset on integration reload — the timer restarts after every options change.",
+          "co2_factor_kg_per_kwh": "Default 0.5 reflects a balanced European-average grid carbon intensity. Reference values: France/RTE 2024: 0.053 (very low carbon, nuclear), EU mix: 0.30, Germany: 0.50, Hoymiles app default: 1.0 (coal-grid marketing), coal-dominant: 1.0+.",
+          "tree_kg_co2_per_year": "Default 25 follows the ADEME (France) standard for a mature European tree. The Hoymiles app uses 18 (young planted trees, growth phase). Tropical mature trees can reach 50."
         }
       }
     },
@@ -83,7 +87,9 @@
       "pv_voltage": { "name": "PV voltage" },
       "pv_current": { "name": "PV current" },
       "alarm_code": { "name": "Alarm code" },
-      "alarm_count": { "name": "Alarm count" }
+      "alarm_count": { "name": "Alarm count" },
+      "co2_savings_today": { "name": "CO2 savings today" },
+      "equivalent_trees_planted_today": { "name": "Equivalent young trees planted today" }
     },
     "binary_sensor": {
       "alarm": { "name": "Alarm" },

@@ -54,7 +54,9 @@
           "backoff_initial_s": "Anfänglicher Wiederholungs-Backoff (Sekunden)",
           "backoff_max_s": "Maximaler Wiederholungs-Backoff (Sekunden)",
           "dtu_unreachable_threshold_min": "Schwellwert „DTU nicht erreichbar“ (Minuten)",
-          "inverter_offline_threshold_h": "Schwellwert „Wechselrichter offline“ (Stunden)"
+          "inverter_offline_threshold_h": "Schwellwert „Wechselrichter offline“ (Stunden)",
+          "co2_factor_kg_per_kwh": "CO2-Emissionsfaktor (kg CO2 pro kWh)",
+          "tree_kg_co2_per_year": "Pro jungem gepflanzten Baum und Jahr absorbiertes CO2 (kg)"
         },
         "data_description": {
           "scan_interval_real_data": "Wie oft Live-Daten (Leistung/Spannung/Strom) abgerufen werden. Minimum 10 s, Standard 60 s. Niedrigere Werte belasten den DTU stärker.",
@@ -64,7 +66,9 @@
           "backoff_initial_s": "Verzögerung vor dem ersten Wiederholungsversuch. Standard 0,5 s. Diese Verzögerung verdoppelt sich nach jedem fehlgeschlagenen Versuch bis zum Maximum.",
           "backoff_max_s": "Obere Grenze für den exponentiellen Backoff. Standard 4 s. Muss mindestens dem Anfangs-Backoff entsprechen.",
           "dtu_unreachable_threshold_min": "Wie lange der DTU stumm sein muss, bevor eine Repair Issue ausgelöst wird. Hinweis: Nach einer Optionsänderung wird dieser Zähler zurückgesetzt — die Issue kann erst nach mindestens einer erfolgreichen Abfrage und anschließendem vollen Schwellenzeitraum erscheinen.",
-          "inverter_offline_threshold_h": "Wie lange ein Wechselrichter ohne RF-Verbindung gemeldet werden muss, bevor eine Repair Issue ausgelöst wird. Wird beim Neuladen der Integration zurückgesetzt — der Timer startet nach jeder Optionsänderung neu."
+          "inverter_offline_threshold_h": "Wie lange ein Wechselrichter ohne RF-Verbindung gemeldet werden muss, bevor eine Repair Issue ausgelöst wird. Wird beim Neuladen der Integration zurückgesetzt — der Timer startet nach jeder Optionsänderung neu.",
+          "co2_factor_kg_per_kwh": "Der Standardwert 0.5 entspricht einer ausgewogenen europäischen Netz-CO2-Intensität. Referenzwerte: Frankreich/RTE 2024: 0.053 (sehr kohlenstoffarm, Atomkraft), EU-Mix: 0.30, Deutschland: 0.50, Hoymiles-App-Standard: 1.0 (Kohlestrom-Marketing), kohledominante Regionen: 1.0+.",
+          "tree_kg_co2_per_year": "Der Standardwert 25 folgt dem ADEME-Standard (Frankreich) für einen ausgewachsenen europäischen Baum. Die Hoymiles-App verwendet 18 (junger gepflanzter Baum in Wachstumsphase). Tropische ausgewachsene Bäume können 50 erreichen."
         }
       }
     },
@@ -83,7 +87,9 @@
       "pv_voltage": { "name": "PV-Spannung" },
       "pv_current": { "name": "PV-Strom" },
       "alarm_code": { "name": "Alarmcode" },
-      "alarm_count": { "name": "Alarmanzahl" }
+      "alarm_count": { "name": "Alarmanzahl" },
+      "co2_savings_today": { "name": "CO2-Einsparung heute" },
+      "equivalent_trees_planted_today": { "name": "Entspricht jungen gepflanzten Bäumen heute" }
     },
     "binary_sensor": {
       "alarm": { "name": "Alarm" },
