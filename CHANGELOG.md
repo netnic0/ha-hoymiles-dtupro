@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [Unreleased]
+
+### Added
+- Two new plant-level sensors estimating environmental impact (PR #6c):
+  - `co2_savings_today` (kg) — daily CO2 emissions avoided.
+  - `equivalent_trees_planted_today` (fractional count) — equivalent young trees planted.
+- Two new OptionsFlow knobs to configure the factors used by these sensors:
+  - `co2_factor_kg_per_kwh` (default `0.5` — balanced European-average grid intensity).
+  - `tree_kg_co2_per_year` (default `25.0` — ADEME standard for a mature European tree).
+- Schema migration v1.2 -> v1.3 injects the default factors into existing entries.
+- i18n strings for the new entities and OptionsFlow fields in EN, FR, DE, ES.
+
+### Changed
+- README refreshed: roadmap reflects v1.0 -> v1.8 history with v1.9 and forward-looking items;
+  comparison table updated to v1.8.0 Silver tier; coverage values aligned with current CI;
+  entity count updated to 118 (was 116).
+
+### Notes
+- The default CO2 factor (0.5 kg/kWh) intentionally differs from the Hoymiles
+  mobile app's value (1.0 kg/kWh, coal-grid marketing baseline). Users wanting
+  cross-source parity with the app can raise the factor via the OptionsFlow;
+  the strings provide regional reference values (France 0.053, EU 0.30, etc.).
+- Lifetime variants of the new sensors (`co2_savings_lifetime`,
+  `equivalent_trees_planted_lifetime`) are NOT included in this release. They depend
+  on the plant-level `total_production` aggregation, which is currently being
+  investigated (Bug A). They will land in a follow-up release once that is fixed.
+- DE / ES translations were authored by the maintainer and should be reviewed by
+  native speakers — open a GitHub issue to suggest improvements.
+
 ## [1.8.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.7.0...v1.8.0) (2026-06-12)
 
 
