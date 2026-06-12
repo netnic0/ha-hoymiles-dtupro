@@ -48,5 +48,3 @@ __all__ = [
     "InverterSeries",
     "PlantData",
 ]
-
-__version__ = "0.1.1-alpha.1"
