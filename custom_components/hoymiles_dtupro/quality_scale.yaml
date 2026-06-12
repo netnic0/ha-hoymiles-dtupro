@@ -1,0 +1,54 @@
+# Hoymiles DTU-Pro — quality_scale checklist (HA 2026.x)
+#
+# Format: each rule is either `done`, `todo`, or `exempt` with a comment.
+# When `exempt`, the comment must explain why the rule does not apply.
+#
+# Tier table reference:
+#   https://developers.home-assistant.io/docs/core/integration-quality-scale/
+
+rules:
+  # ─── Bronze ─────────────────────────────────────────────────────────────
+  config-flow: done
+  test-before-configure: done           # config_flow probes the DTU before saving the entry
+  unique-config-entry: done             # unique_id = DTU serial, prevents duplicates
+  config-flow-test-coverage: done       # 5 happy/error path tests in tests/test_config_flow.py
+  runtime-data: done                    # hass.data[DOMAIN][entry.entry_id] bundle
+  test-before-setup: done               # async_config_entry_first_refresh raises ConfigEntryNotReady
+  appropriate-polling: done             # 60 s default real-data, 300 s metadata, both via OptionsFlow
+  entity-unique-id: done                # plant: f"{dtu_serial}_{translation_key}"; inverter: f"{serial}_{translation_key}"
+  has-entity-name: done                 # _attr_has_entity_name = True on both base entity classes
+  entity-event-setup: done              # CoordinatorEntity wires async_added_to_hass / async_will_remove_from_hass
+  dependency-transparency: done         # pymodbus[serial]>=3.6,<4.0 declared in manifest + pyproject
+  action-setup: done                    # services.yaml documents the (skeleton) set_inverter_limit action
+  common-modules: done                  # entity.py, coordinator.py, config_flow.py follow HA layout
+  docs-high-level-description: done     # README §"What this integration does"
+  docs-installation-instructions: done  # README §"Installation" (HACS + manual)
+  docs-removal-instructions: done       # README — standard HA removal applies; no special steps
+  docs-actions: done                    # services.yaml + strings.json document the action
+  brands: done                          # brand_icons shipped via icons/ and used by HA frontend
+
+  # ─── Silver ─────────────────────────────────────────────────────────────
+  action-exceptions:
+    status: exempt
+    comment: >
+      The integration declares `set_inverter_limit` in services.yaml as a
+      forward-looking placeholder (will be implemented in PR #6 territory
+      with real Hoymiles WriteSingleHolding semantics). No handler is
+      registered today so HA never invokes user code, and the action is
+      effectively unreachable. When the handler lands the rule will be
+      re-evaluated and likely become `done`.
+  config-entry-unloading: done          # async_unload_entry tears down both coordinators + clears Repair Issues
+  docs-configuration-parameters: done   # OptionsFlow data + data_description in EN/FR/DE/ES (PR #4 + #5b)
+  docs-installation-parameters: done    # README §"Configuration" + user-step data_description in 5 locales
+  entity-unavailable: done              # CoordinatorEntity flips entity.available based on coordinator.last_update_success
+  integration-owner: done               # codeowners=[@netnic0] in manifest.json
+  log-when-unavailable: done            # DataUpdateCoordinator logs "Error fetching data" once on failure and "Fetching data" on recovery
+  parallel-updates: done                # PARALLEL_UPDATES = 0 declared in sensor.py and binary_sensor.py (PR #5b)
+  reauthentication-flow:
+    status: exempt
+    comment: >
+      The integration is no-auth: it talks Modbus TCP to a DTU on the local
+      network with no credentials, no tokens, and no cloud account. There is
+      nothing to re-authenticate against; an unreachable DTU is surfaced via
+      the existing `dtu_unreachable` Repair Issue, not a reauth flow.
+  test-coverage: done                   # CI runs --cov-fail-under=95 on the HA layer
