@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.6.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.5.0...v1.6.0) (2026-06-12)
+
+
+### Features
+
+* **integration:** add OptionsFlow exposing 8 user-tunable knobs ([9fd179a](https://github.com/netnic0/ha-hoymiles-dtupro/commit/9fd179a30c49a3d16f268d872b81a4b2f506be03))
+* **integration:** add OptionsFlow exposing 8 user-tunable knobs ([234c081](https://github.com/netnic0/ha-hoymiles-dtupro/commit/234c081411a12fa45af7c6ee6c9be2c70f9a4a5b))
+
+
+### Bug Fixes
+
+* **tests:** drop scan_interval_real_data from config_flow user_input ([0dc0a25](https://github.com/netnic0/ha-hoymiles-dtupro/commit/0dc0a25f5710a3deb653df1584e60361ff35c659))
+
 ## [1.5.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.4.0...v1.5.0) (2026-06-12)
 
 
