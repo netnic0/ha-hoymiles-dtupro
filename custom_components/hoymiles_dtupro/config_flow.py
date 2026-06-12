@@ -82,9 +82,14 @@ USER_SCHEMA = vol.Schema(
 )
 
 
-async def _probe_dtu(host: str, port: int, unit_id: int) -> str:
+async def _probe_dtu(
+    host: str,
+    port: int,
+    unit_id: int,
+    timeout_s: float = DEFAULT_TIMEOUT_S,
+) -> str:
     """Open a Modbus connection, read the DTU serial, and close. Returns the SN."""
-    client = HoymilesAsyncClient(host=host, port=port, unit_id=unit_id, timeout=DEFAULT_TIMEOUT_S)
+    client = HoymilesAsyncClient(host=host, port=port, unit_id=unit_id, timeout=timeout_s)
     return await client.async_get_dtu_serial()
 
 
@@ -228,6 +233,7 @@ class HoymilesDtuProConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     user_input[CONF_HOST],
                     user_input.get(CONF_PORT, DEFAULT_PORT),
                     user_input.get(CONF_UNIT_ID, DEFAULT_UNIT_ID),
+                    timeout_s=float(entry.options.get(CONF_TIMEOUT_S, DEFAULT_TIMEOUT_S)),
                 )
             except HoymilesError:
                 errors["base"] = "cannot_connect"
