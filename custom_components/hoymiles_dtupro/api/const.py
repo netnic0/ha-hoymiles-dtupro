@@ -45,8 +45,22 @@ loop stops earlier when NULL_INVERTER_SERIAL is encountered."""
 DEFAULT_PORT: Final[int] = 502
 DEFAULT_UNIT_ID: Final[int] = 1
 DEFAULT_TIMEOUT_S: Final[float] = 5.0
-DEFAULT_RETRIES: Final[int] = 3
-"""Reduced from ArekKubacki's 5 to lower DTU stress."""
+DEFAULT_RETRY_ATTEMPTS: Final[int] = 3
+"""Maximum number of attempts for a single transactional fetch.
+
+Reduced from ArekKubacki's 5 to lower DTU stress. Wraps the full
+open → read → close cycle (a fresh TCP socket is opened per attempt).
+"""
+
+DEFAULT_BACKOFF_INITIAL_S: Final[float] = 0.5
+"""Initial backoff delay between retry attempts, in seconds."""
+
+DEFAULT_BACKOFF_MAX_S: Final[float] = 4.0
+"""Upper bound for the exponential backoff between retry attempts, in seconds.
+
+Worst-case wall-clock for a fetch with 3 attempts and DEFAULT_TIMEOUT_S = 5 s:
+5 + 0.5 + 5 + 1 + 5 ≈ 16.5 s — well below the 60 s coordinator interval.
+"""
 
 # ─── DTU type discriminator ───────────────────────────────────────────────────
 DTU_TYPE_STANDARD: Final[int] = 0

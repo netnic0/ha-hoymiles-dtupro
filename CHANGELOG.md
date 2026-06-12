@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Modbus client resilience** — bounded retry with exponential backoff for
+  transient TCP failures. Connection drops and timeouts now trigger up to 3
+  attempts (default) within a single `async_get_plant_data` /
+  `async_get_inverters` / `async_get_dtu_serial` fetch, with 0.5 → 1 → 2 s
+  backoff capped at 4 s. Worst-case wall-clock ~16.5 s, well below the 60 s
+  polling interval and the 5-min `dtu_unreachable` Repair Issue threshold.
+  Each attempt opens a fresh TCP socket (transactional retry at the public-API
+  boundary).
+- New `HoymilesAsyncClient` constructor kwargs `retry_attempts`,
+  `backoff_initial_s`, `backoff_max_s` (defaults in `api/const.py`). PR #4 will
+  expose these via the OptionsFlow.
+- Three `tests/test_client.py` cases covering retry-on-connection-error,
+  retry-on-timeout, no-retry-on-protocol-error, and an additional
+  exhaustion-with-fresh-socket-contract assertion (`connect.await_count == 3`).
+
+### Changed
+
+- Public methods `async_get_dtu_serial`, `async_get_inverters`, and
+  `async_get_plant_data` now delegate to internal `_fetch_*_once` helpers
+  through a single `_fetch_with_retry` orchestrator. **No change to the
+  external API contract.**
+- `HoymilesProtocolError` is **not** retried — these errors are deterministic
+  (malformed frame at a specific slot) and retrying wastes wall-clock time.
+- `api/const.py`: dead constant `DEFAULT_RETRIES` renamed to
+  `DEFAULT_RETRY_ATTEMPTS` and is now actually wired into the client. Two new
+  constants `DEFAULT_BACKOFF_INITIAL_S` and `DEFAULT_BACKOFF_MAX_S` were added.
+
 ### Added
 
 - **Repair Issues** powered by `homeassistant.helpers.issue_registry`:
