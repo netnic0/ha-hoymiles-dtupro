@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.5.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.4.0...v1.5.0) (2026-06-12)
+
+
+### Features
+
+* **api:** add bounded retry with exponential backoff to Modbus client ([21dc9cd](https://github.com/netnic0/ha-hoymiles-dtupro/commit/21dc9cdb93415a5b8185d5dffd0b3d7473857064))
+* **api:** add bounded retry with exponential backoff to Modbus client ([cb31935](https://github.com/netnic0/ha-hoymiles-dtupro/commit/cb31935971e42e5c7a51813e2fb645da3dea81c7))
+* **diagnostics,repairs:** enrich diagnostics and add Repair Issues ([b22ba0b](https://github.com/netnic0/ha-hoymiles-dtupro/commit/b22ba0b4ead19db470dbbec72f4829d5ed3a53ab))
+
 ## [Unreleased]
 
 ### Added
