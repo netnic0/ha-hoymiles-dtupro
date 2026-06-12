@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.9.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.8.0...v1.9.0) (2026-06-12)
+
+
+### Features
+
+* **config_flow:** add 2 OptionsFlow knobs for CO2 / tree factors ([bd89b0d](https://github.com/netnic0/ha-hoymiles-dtupro/commit/bd89b0dd8f8295ad3b0c009f1e76519a7b17e375))
+* **const:** add CO2/tree factor defaults and OptionsFlow range bounds ([2b4f404](https://github.com/netnic0/ha-hoymiles-dtupro/commit/2b4f404b4cf82121fd4bcf3ba5dbedaf441e5b35))
+* **i18n:** localise CO2 savings + equivalent trees planted entities ([5e60ffc](https://github.com/netnic0/ha-hoymiles-dtupro/commit/5e60ffc0fc4f57862af7f83ad081b3d9ec5b9078))
+* **init:** migrate v1.2 to v1.3 with second independent if block ([e50824f](https://github.com/netnic0/ha-hoymiles-dtupro/commit/e50824f105a25f053f257693737d7e86cfe0586f))
+* **sensor:** add CO2 savings and equivalent trees planted entities ([71a1398](https://github.com/netnic0/ha-hoymiles-dtupro/commit/71a13983c5e02f9dfbbd238851a14a407a9ea916))
+
+
+### Documentation
+
+* **readme,changelog:** refresh roadmap + version + coverage + entity count ([46a7408](https://github.com/netnic0/ha-hoymiles-dtupro/commit/46a74086c3df0697399bbaa093867441ad84aa2b))
+
 ## [Unreleased]
 
 ### Added
