@@ -7,14 +7,12 @@
         "data": {
           "host": "Host oder IP-Adresse",
           "port": "Modbus-TCP-Port",
-          "unit_id": "Modbus-Geräte-ID (Unit ID)",
-          "scan_interval_real_data": "Abfrageintervall für Live-Daten (Sekunden)"
+          "unit_id": "Modbus-Geräte-ID (Unit ID)"
         },
         "data_description": {
           "host": "Lokale IP-Adresse des DTU-Pro (z. B. 192.0.2.1).",
           "port": "Der Modbus-TCP-Standardport ist 502.",
-          "unit_id": "Modbus-Slave-ID. Standardmäßig 1; nur ändern, wenn Sie wissen, was Sie tun.",
-          "scan_interval_real_data": "Wie oft Live-Daten (Leistung/Spannung/Strom) abgerufen werden. Mindestens 10 Sekunden. Standard: 60 Sekunden, um den DTU nicht zu überlasten."
+          "unit_id": "Modbus-Slave-ID. Standardmäßig 1; nur ändern, wenn Sie wissen, was Sie tun."
         }
       },
       "reconfigure": {
@@ -23,8 +21,7 @@
         "data": {
           "host": "Host oder IP-Adresse",
           "port": "Modbus-TCP-Port",
-          "unit_id": "Modbus-Geräte-ID (Unit ID)",
-          "scan_interval_real_data": "Abfrageintervall für Live-Daten (Sekunden)"
+          "unit_id": "Modbus-Geräte-ID (Unit ID)"
         }
       }
     },
@@ -37,6 +34,37 @@
       "already_configured": "Das Gerät ist bereits konfiguriert.",
       "another_device": "Unter dieser Adresse antwortet ein anderer DTU. Die Konfiguration wurde abgebrochen, um Gerätevermischungen zu vermeiden.",
       "reconfigure_successful": "Neukonfiguration erfolgreich."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Hoymiles DTU-Pro Optionen",
+        "description": "Passen Sie die Integration an Ihre Installation an. Die Standardwerte sind konservativ und für den Produktionsbetrieb sicher.",
+        "data": {
+          "scan_interval_real_data": "Abfrageintervall Live-Daten (Sekunden)",
+          "scan_interval_metadata": "Abfrageintervall Metadaten (Sekunden)",
+          "timeout_s": "Modbus-TCP-Zeitüberschreitung (Sekunden)",
+          "retry_attempts": "Wiederholungsversuche pro Abruf",
+          "backoff_initial_s": "Anfänglicher Wiederholungs-Backoff (Sekunden)",
+          "backoff_max_s": "Maximaler Wiederholungs-Backoff (Sekunden)",
+          "dtu_unreachable_threshold_min": "Schwellwert „DTU nicht erreichbar“ (Minuten)",
+          "inverter_offline_threshold_h": "Schwellwert „Wechselrichter offline“ (Stunden)"
+        },
+        "data_description": {
+          "scan_interval_real_data": "Wie oft Live-Daten (Leistung/Spannung/Strom) abgerufen werden. Minimum 10 s, Standard 60 s. Niedrigere Werte belasten den DTU stärker.",
+          "scan_interval_metadata": "Wie oft langsam veränderliche Daten (RF-Status, Alarmzähler) abgerufen werden. Minimum 60 s, Standard 300 s.",
+          "timeout_s": "Wartezeit auf eine einzelne Modbus-Antwort, bevor der Vorgang abgebrochen wird. Standard 5 s.",
+          "retry_attempts": "Maximale Versuche pro Abruf bei vorübergehenden Fehlern (Verbindung verloren, Zeitüberschreitung). Bei jedem Versuch wird eine neue TCP-Verbindung geöffnet. Standard 3, Maximum 10.",
+          "backoff_initial_s": "Verzögerung vor dem ersten Wiederholungsversuch. Standard 0,5 s. Diese Verzögerung verdoppelt sich nach jedem fehlgeschlagenen Versuch bis zum Maximum.",
+          "backoff_max_s": "Obere Grenze für den exponentiellen Backoff. Standard 4 s. Muss mindestens dem Anfangs-Backoff entsprechen.",
+          "dtu_unreachable_threshold_min": "Wie lange der DTU stumm sein muss, bevor eine Repair Issue ausgelöst wird. Hinweis: Nach einer Optionsänderung wird dieser Zähler zurückgesetzt — die Issue kann erst nach mindestens einer erfolgreichen Abfrage und anschließendem vollen Schwellenzeitraum erscheinen.",
+          "inverter_offline_threshold_h": "Wie lange ein Wechselrichter ohne RF-Verbindung gemeldet werden muss, bevor eine Repair Issue ausgelöst wird. Wird beim Neuladen der Integration zurückgesetzt — der Timer startet nach jeder Optionsänderung neu."
+        }
+      }
+    },
+    "error": {
+      "backoff_initial_above_max": "Der Anfangs-Backoff darf nicht größer als der maximale Backoff sein."
     }
   },
   "entity": {

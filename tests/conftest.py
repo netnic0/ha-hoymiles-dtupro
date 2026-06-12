@@ -125,12 +125,16 @@ def mock_plant_data(mock_dtu_serial: str, mock_inverter_serials: list[str]) -> P
 
 @pytest.fixture
 def mock_config_entry_data(mock_dtu_serial: str) -> dict[str, object]:
-    """Default config entry payload for the Hoymiles DTU-Pro integration."""
+    """Default config entry payload for the Hoymiles DTU-Pro integration.
+
+    From PR #4 (MINOR_VERSION=2), `scan_interval_real_data` lives in
+    `entry.options`, not in `entry.data`. The `mock_config_entry` fixture
+    below builds the entry with `options={}` (defaults will apply at runtime).
+    """
     return {
         "host": "192.0.2.1",
         "port": 502,
         "unit_id": 1,
-        "scan_interval_real_data": 30,
     }
 
 
@@ -151,6 +155,34 @@ def mock_config_entry(mock_dtu_serial: str, mock_config_entry_data: dict) -> Moc
         domain=DOMAIN,
         title=f"Hoymiles DTU-Pro ({mock_dtu_serial})",
         data=mock_config_entry_data,
+        options={},
+        unique_id=mock_dtu_serial,
+        version=1,
+        minor_version=2,
+    )
+
+
+@pytest.fixture
+def mock_config_entry_v1_legacy(mock_dtu_serial: str) -> MockConfigEntry:
+    """A pre-PR-#4 (minor_version=1) config entry for migration testing.
+
+    Mirrors the schema used before PR #4: `scan_interval_real_data` is in
+    `data` rather than `options`. `async_migrate_entry` should move it.
+    """
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.hoymiles_dtupro.const import DOMAIN
+
+    return MockConfigEntry(
+        domain=DOMAIN,
+        title=f"Hoymiles DTU-Pro ({mock_dtu_serial})",
+        data={
+            "host": "192.0.2.1",
+            "port": 502,
+            "unit_id": 1,
+            "scan_interval_real_data": 30,
+        },
+        options={},
         unique_id=mock_dtu_serial,
         version=1,
         minor_version=1,
