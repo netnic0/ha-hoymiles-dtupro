@@ -2,7 +2,8 @@
 
 Entities created:
   * Plant-level (attached to the DTU device):
-      pv_power, today_production, total_production
+      pv_power, today_production, total_production,
+      co2_savings_today, equivalent_trees_planted_today (PR #6c)
 
   * Per-inverter (one set per detected inverter, port-agnostic):
       temperature, grid_voltage, grid_frequency, alarm_code, alarm_count
@@ -11,7 +12,7 @@ Entities created:
       pv_voltage, pv_current, pv_power, today_production, total_production
 
 Full entity count for 7 HMS-1000-2T inverters with 2 ports each:
-  3 (plant) + 7*5 (inverter) + 7*2*5 (port) = 3 + 35 + 70 = 108 sensors.
+  5 (plant) + 7*5 (inverter) + 7*2*5 (port) = 5 + 35 + 70 = 110 sensors.
 """
 
 from __future__ import annotations
@@ -30,12 +31,19 @@ from homeassistant.const import (
     UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfFrequency,
+    UnitOfMass,
     UnitOfPower,
     UnitOfTemperature,
 )
 
 from .api import PlantData
-from .const import DOMAIN
+from .const import (
+    CONF_CO2_FACTOR_KG_PER_KWH,
+    CONF_TREE_KG_CO2_PER_YEAR,
+    DEFAULT_CO2_FACTOR_KG_PER_KWH,
+    DEFAULT_TREE_KG_CO2_PER_YEAR,
+    DOMAIN,
+)
 from .entity import HoymilesInverterEntity, HoymilesPlantEntity
 
 if TYPE_CHECKING:
@@ -79,6 +87,35 @@ PLANT_SENSORS: tuple[SensorEntityDescription, ...] = (
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+    ),
+)
+
+
+# ─── Environmental impact sensors (PR #6c, plant-level only) ──────────────────
+# Defaults reflect a balanced European-average grid carbon intensity (0.5 kg/kWh)
+# and the ADEME standard for a mature European tree (25 kg CO2 absorbed/year).
+# Both factors are user-configurable via the OptionsFlow — see strings.json
+# `data_description` for reference values matching France/EU/Germany/Hoymiles.
+PLANT_ENVIRONMENTAL_SENSORS: tuple[SensorEntityDescription, ...] = (
+    SensorEntityDescription(
+        key="co2_savings_today",
+        translation_key="co2_savings_today",
+        device_class=SensorDeviceClass.WEIGHT,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfMass.KILOGRAMS,
+        icon="mdi:molecule-co2",
+        suggested_display_precision=1,
+    ),
+    SensorEntityDescription(
+        key="equivalent_trees_planted_today",
+        translation_key="equivalent_trees_planted_today",
+        # No device_class: "trees" is not a HA standard quantity.
+        # state_class TOTAL_INCREASING mirrors today_production (resets at midnight).
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        # No native_unit_of_measurement: pure count, but a fractional float so the
+        # value is always informative even on low-production days (winter ≈ 0.05).
+        icon="mdi:tree-outline",
+        suggested_display_precision=2,
     ),
 )
 
@@ -180,6 +217,73 @@ class HoymilesPlantSensor(HoymilesPlantEntity, SensorEntity):
         return getattr(data, self.entity_description.key, None)
 
 
+class HoymilesEnvironmentalSensor(HoymilesPlantEntity, SensorEntity):
+    """A derived plant-level sensor for CO2 savings or equivalent trees planted.
+
+    Distinct from `HoymilesPlantSensor` because the value is NOT a direct
+    attribute of `PlantData` — it is computed from `data.today_production`
+    (Wh) and one or two user-configurable factors stored in
+    `entry.options`. PR #6c (Option B in the plan-reviewer audit) keeps the
+    `api/` sub-package free of HA configuration knowledge: business logic
+    lives in the HA layer.
+
+    This class is forward-compatible with PR #6d (lifetime variants): a future
+    subclass could swap `today_production` for a fixed `total_production`
+    once Bug A is resolved.
+    """
+
+    entity_description: SensorEntityDescription
+
+    def __init__(
+        self, coordinator: HoymilesRealDataCoordinator, description: SensorEntityDescription
+    ) -> None:
+        super().__init__(
+            coordinator, translation_key=description.translation_key or description.key
+        )
+        self.entity_description = description
+
+    def _factors(self) -> tuple[float, float]:
+        """Read the two factors from entry.options, falling back to defaults.
+
+        Returns a tuple `(co2_factor_kg_per_kwh, tree_kg_co2_per_year)`.
+        """
+        # `config_entry` is provided by HA on the CoordinatorEntity since
+        # 2024.4 (see homeassistant.helpers.update_coordinator). Fall back to
+        # an empty dict if absent — defensive only, never reached in practice.
+        options = getattr(self.coordinator.config_entry, "options", {}) or {}
+        co2_factor = float(options.get(CONF_CO2_FACTOR_KG_PER_KWH, DEFAULT_CO2_FACTOR_KG_PER_KWH))
+        tree_factor = float(options.get(CONF_TREE_KG_CO2_PER_YEAR, DEFAULT_TREE_KG_CO2_PER_YEAR))
+        return co2_factor, tree_factor
+
+    @property
+    def native_value(self) -> float | None:
+        """Compute the sensor value from `today_production` and the factors."""
+        data: PlantData = self.coordinator.data
+        today_wh = data.today_production
+        if today_wh is None or today_wh < 0:
+            return None
+        today_kwh = today_wh / 1000.0
+        co2_factor, tree_factor = self._factors()
+
+        if self.entity_description.key == "co2_savings_today":
+            # kg CO2 saved = kWh * (kg CO2 / kWh)
+            return round(today_kwh * co2_factor, 2)
+
+        if self.entity_description.key == "equivalent_trees_planted_today":
+            # arbres équivalents = (kg CO2 saved today) / (kg CO2 / arbre / an)
+            # Note: the unit of the numerator (today, in kg) and the unit of the
+            # denominator (per year) are intentionally NOT homogeneous — this
+            # mirrors the Hoymiles app convention which gives a "fractional
+            # tree per day" snapshot. Aggregating via utility_meter cycle:yearly
+            # gives a meaningful "trees per year".
+            if tree_factor <= 0:
+                return None
+            kg_today = today_kwh * co2_factor
+            return round(kg_today / tree_factor, 2)
+
+        return None  # pragma: no cover — descriptor not registered for this class
+
+
 class HoymilesInverterSensor(HoymilesInverterEntity, SensorEntity):
     """A per-inverter sensor for port-agnostic fields (temperature, grid, alarms).
 
@@ -263,6 +367,9 @@ async def async_setup_entry(
     entities: list[SensorEntity] = []
 
     entities.extend(HoymilesPlantSensor(real_coord, desc) for desc in PLANT_SENSORS)
+    entities.extend(
+        HoymilesEnvironmentalSensor(real_coord, desc) for desc in PLANT_ENVIRONMENTAL_SENSORS
+    )
 
     seen_serials: set[str] = set()
     for inv in plant.inverters:

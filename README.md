@@ -7,7 +7,7 @@
 
 > Modern Home Assistant custom integration for the **Hoymiles DTU-Pro** monitoring
 > gateway. Speaks Modbus TCP. Built with `asyncio`, typed dataclasses, multi-language
-> UI (EN / FR / ES / DE), and 96 % library test coverage.
+> UI (EN / FR / ES / DE), Silver-tier quality (>=80% api / >=95% HA-layer test coverage).
 
 ---
 
@@ -16,9 +16,10 @@
 Tested end-to-end against a real **DTU-Pro** with 7 **HMS-1000-2T** micro-inverters
 (14 panels — 6 Est, 8 Ouest) running firmware **V00.07.04**.
 
-Results: **8 devices · 116 entities** (1 plant device + 7 inverter sub-devices,
+Results: **8 devices · 118 entities** (1 plant device + 7 inverter sub-devices,
 each with 16 entities covering per-MPPT-port PV power, energy, voltage, current,
-temperature, grid data, alarm, and RF link status).
+temperature, grid data, alarm, RF link status, plus 2 plant-level environmental
+impact sensors — CO2 savings and equivalent young trees planted).
 
 ---
 
@@ -79,7 +80,7 @@ export so we can confirm and add it to the tested list.
 
 | Project | Transport | Async | Status |
 |---|---|---|---|
-| **`netnic0/ha-hoymiles-dtupro`** *(this repo)* | Modbus TCP (DTU-Pro wired gateway) | Yes — `pymodbus.AsyncModbusTcpClient` | **Stable v1.0.0** — hardware validated |
+| **`netnic0/ha-hoymiles-dtupro`** *(this repo)* | Modbus TCP (DTU-Pro wired gateway) | Yes — `pymodbus.AsyncModbusTcpClient` | **Stable v1.8.0 — Silver tier 🥈** — hardware validated |
 | [`ArekKubacki/Hoymiles-Plant-DTU-Pro`][arek-url] | Modbus TCP (DTU-Pro wired gateway) | No — sync | Stable, MIT |
 | [`suaveolent/ha-hoymiles-wifi`][suav-url] | Protobuf TCP (HMS-WiFi inverters) | Yes | Stable, MIT |
 
@@ -155,6 +156,8 @@ The table below uses the **English** translation key names (locale `en`).
 | `sensor.<dtu>_pv_power` | sensor | Plant total live power (W) |
 | `sensor.<dtu>_today_production` | sensor | Plant total today (Wh, displayed as kWh, `state_class: total_increasing`) |
 | `sensor.<dtu>_total_production` | sensor | Plant lifetime (Wh, displayed as kWh, `state_class: total`) |
+| `sensor.<dtu>_co2_savings_today` | sensor | CO2 emissions avoided today (kg, `state_class: total_increasing`). Default factor matches the Hoymiles app; configurable via OptionsFlow. |
+| `sensor.<dtu>_equivalent_trees_planted_today` | sensor | Equivalent young trees planted today (fractional count, `state_class: total_increasing`). |
 | `binary_sensor.<dtu>_alarm` | binary_sensor | Aggregated alarm flag |
 
 ### Per-inverter device (×N, one per detected inverter)
@@ -244,10 +247,19 @@ CI runs the same checks against Python 3.13 on every PR. See
 
 ## Roadmap
 
-- **v0.3.1-alpha.1** *(current)* — Full sensor wiring (116 entities), hardware
-  validated, `apply_data_size_fix` wired, brand assets, Lovelace examples.
-- **v1.0.0** — Stable release, broader hardware matrix, optional service for
-  setting per-inverter power limits.
+Released:
+- **v1.0.0** — Initial public release (config flow, sensor wiring, hardware validated, brand assets, Lovelace examples).
+- **v1.4.0** — Diagnostics platform + Repair Issues (DTU unreachable / inverter offline thresholds).
+- **v1.5.0** — Modbus retry + exponential backoff (resilience).
+- **v1.6.0** — OptionsFlow with 8 user-tunable knobs (scan intervals, retries, backoff, alert thresholds).
+- **v1.7.0** — mypy strict expanded to the full HA layer; Silver prerequisites (PARALLEL_UPDATES, reconfigure i18n, utility_meter doc).
+- **v1.8.0** — **Silver tier 🥈** reached (>=95% HA-layer coverage, 28 quality_scale rules).
+- **v1.9.0** *(this PR)* — CO2 savings + equivalent young trees planted sensors with user-configurable factors. README refresh.
+
+Forward-looking:
+- **Bug A fix** — investigate and correct the plant-level `total_production` aggregation (×4.35 vs Hoymiles app — see internal tracker). Lifetime CO2/trees sensors land alongside.
+- **Per-inverter power limit service** — implement the `set_inverter_limit` service handler (currently a placeholder).
+- **Gold-tier candidate** — strict-typing of test code, full action-exception handling, accessibility audit.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the actual release notes.
 

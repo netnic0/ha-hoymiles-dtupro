@@ -27,6 +27,7 @@ from .api import (
 from .const import (
     CONF_BACKOFF_INITIAL_S,
     CONF_BACKOFF_MAX_S,
+    CONF_CO2_FACTOR_KG_PER_KWH,
     CONF_DTU_UNREACHABLE_THRESHOLD_MIN,
     CONF_HOST,
     CONF_INVERTER_OFFLINE_THRESHOLD_H,
@@ -35,12 +36,15 @@ from .const import (
     CONF_SCAN_INTERVAL_METADATA,
     CONF_SCAN_INTERVAL_REAL_DATA,
     CONF_TIMEOUT_S,
+    CONF_TREE_KG_CO2_PER_YEAR,
     CONF_UNIT_ID,
     DEFAULT_BACKOFF_INITIAL_S,
     DEFAULT_BACKOFF_MAX_S,
+    DEFAULT_CO2_FACTOR_KG_PER_KWH,
     DEFAULT_RETRY_ATTEMPTS,
     DEFAULT_SCAN_INTERVAL_METADATA,
     DEFAULT_SCAN_INTERVAL_REAL_DATA,
+    DEFAULT_TREE_KG_CO2_PER_YEAR,
     DOMAIN,
     ISSUE_DTU_UNREACHABLE_THRESHOLD,
     ISSUE_INVERTER_OFFLINE_THRESHOLD,
@@ -48,6 +52,8 @@ from .const import (
     OPTIONS_BACKOFF_INITIAL_MIN,
     OPTIONS_BACKOFF_MAX_MAX,
     OPTIONS_BACKOFF_MAX_MIN,
+    OPTIONS_CO2_FACTOR_MAX,
+    OPTIONS_CO2_FACTOR_MIN,
     OPTIONS_DTU_UNREACHABLE_MIN_MAX,
     OPTIONS_DTU_UNREACHABLE_MIN_MIN,
     OPTIONS_INVERTER_OFFLINE_H_MAX,
@@ -60,6 +66,8 @@ from .const import (
     OPTIONS_SCAN_INTERVAL_REAL_DATA_MIN,
     OPTIONS_TIMEOUT_MAX,
     OPTIONS_TIMEOUT_MIN,
+    OPTIONS_TREE_KG_PER_YEAR_MAX,
+    OPTIONS_TREE_KG_PER_YEAR_MIN,
 )
 
 if TYPE_CHECKING:
@@ -175,6 +183,20 @@ def _build_options_schema(current: dict[str, Any]) -> vol.Schema:
                 vol.Coerce(int),
                 vol.Range(min=OPTIONS_INVERTER_OFFLINE_H_MIN, max=OPTIONS_INVERTER_OFFLINE_H_MAX),
             ),
+            vol.Optional(
+                CONF_CO2_FACTOR_KG_PER_KWH,
+                default=current.get(CONF_CO2_FACTOR_KG_PER_KWH, DEFAULT_CO2_FACTOR_KG_PER_KWH),
+            ): vol.All(
+                vol.Coerce(float),
+                vol.Range(min=OPTIONS_CO2_FACTOR_MIN, max=OPTIONS_CO2_FACTOR_MAX),
+            ),
+            vol.Optional(
+                CONF_TREE_KG_CO2_PER_YEAR,
+                default=current.get(CONF_TREE_KG_CO2_PER_YEAR, DEFAULT_TREE_KG_CO2_PER_YEAR),
+            ): vol.All(
+                vol.Coerce(float),
+                vol.Range(min=OPTIONS_TREE_KG_PER_YEAR_MIN, max=OPTIONS_TREE_KG_PER_YEAR_MAX),
+            ),
         }
     )
 
@@ -195,7 +217,7 @@ class HoymilesDtuProConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle the user-driven config flow."""
 
     VERSION = 1
-    MINOR_VERSION = 2
+    MINOR_VERSION = 3
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
@@ -262,12 +284,13 @@ class HoymilesDtuProConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    """Post-install user-tunable options for the integration (PR #4).
+    """Post-install user-tunable options for the integration (PR #4 + PR #6c).
 
-    Exposes 8 knobs: 2 scan intervals + 4 client (timeout, retries, backoff) +
-    2 Repair Issue thresholds. All are read by `async_setup_entry` at load time
-    via `entry.options.get(KEY, DEFAULT)`. An update listener triggers a reload
-    whenever the user submits new values.
+    Exposes 10 knobs: 2 scan intervals + 4 client (timeout, retries, backoff) +
+    2 Repair Issue thresholds + 2 environmental impact factors (CO2 per kWh,
+    CO2 per tree per year). All are read by `async_setup_entry` or by
+    individual sensors at evaluation time via `entry.options.get(KEY, DEFAULT)`.
+    An update listener triggers a reload whenever the user submits new values.
     """
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:

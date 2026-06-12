@@ -54,7 +54,9 @@
           "backoff_initial_s": "Délai initial entre tentatives (secondes)",
           "backoff_max_s": "Délai maximal entre tentatives (secondes)",
           "dtu_unreachable_threshold_min": "Seuil d'alerte « DTU injoignable » (minutes)",
-          "inverter_offline_threshold_h": "Seuil d'alerte « onduleur hors ligne » (heures)"
+          "inverter_offline_threshold_h": "Seuil d'alerte « onduleur hors ligne » (heures)",
+          "co2_factor_kg_per_kwh": "Facteur d'émission CO2 (kg CO2 par kWh)",
+          "tree_kg_co2_per_year": "CO2 absorbé par jeune arbre planté et par an (kg)"
         },
         "data_description": {
           "scan_interval_real_data": "Fréquence de récupération des données en temps réel (puissance/tension/courant). Minimum 10 s, défaut 60 s. Des valeurs plus basses stressent le DTU.",
@@ -64,7 +66,9 @@
           "backoff_initial_s": "Délai avant la première nouvelle tentative. Défaut 0,5 s. Ce délai double à chaque échec, jusqu'au maximum.",
           "backoff_max_s": "Borne supérieure du backoff exponentiel. Défaut 4 s. Doit être au moins égal au délai initial.",
           "dtu_unreachable_threshold_min": "Durée de silence du DTU avant déclenchement d'une Repair Issue. Important : après un changement d'option, ce compteur est remis à zéro — l'alerte ne peut se déclencher qu'après au moins une lecture réussie suivie du seuil complet de silence.",
-          "inverter_offline_threshold_h": "Durée pendant laquelle un onduleur doit signaler une perte de liaison RF avant qu'une Repair Issue ne soit créée. Le compteur est remis à zéro à chaque rechargement de l'intégration (changement d'options inclus)."
+          "inverter_offline_threshold_h": "Durée pendant laquelle un onduleur doit signaler une perte de liaison RF avant qu'une Repair Issue ne soit créée. Le compteur est remis à zéro à chaque rechargement de l'intégration (changement d'options inclus).",
+          "co2_factor_kg_per_kwh": "La valeur par défaut 0.5 reflète une intensité carbone moyenne européenne équilibrée. Valeurs de référence : France/RTE 2024 : 0.053 (très bas carbone, nucléaire), mix UE : 0.30, Allemagne : 0.50, défaut app Hoymiles : 1.0 (mix charbon, marketing), régions à dominante charbon : 1.0+.",
+          "tree_kg_co2_per_year": "La valeur par défaut 25 suit le standard ADEME pour un arbre adulte européen. L'app Hoymiles utilise 18 (jeune arbre planté en croissance). Les arbres tropicaux adultes peuvent atteindre 50."
         }
       }
     },
@@ -83,7 +87,9 @@
       "pv_voltage": { "name": "Tension PV" },
       "pv_current": { "name": "Courant PV" },
       "alarm_code": { "name": "Code d'alarme" },
-      "alarm_count": { "name": "Nombre d'alarmes" }
+      "alarm_count": { "name": "Nombre d'alarmes" },
+      "co2_savings_today": { "name": "Économies CO2 du jour" },
+      "equivalent_trees_planted_today": { "name": "Équivalent jeunes arbres plantés du jour" }
     },
     "binary_sensor": {
       "alarm": { "name": "Alarme" },

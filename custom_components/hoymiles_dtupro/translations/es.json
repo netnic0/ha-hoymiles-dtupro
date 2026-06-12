@@ -54,7 +54,9 @@
           "backoff_initial_s": "Espera inicial entre reintentos (segundos)",
           "backoff_max_s": "Espera máxima entre reintentos (segundos)",
           "dtu_unreachable_threshold_min": "Umbral de alerta «DTU inalcanzable» (minutos)",
-          "inverter_offline_threshold_h": "Umbral de alerta «inversor sin conexión» (horas)"
+          "inverter_offline_threshold_h": "Umbral de alerta «inversor sin conexión» (horas)",
+          "co2_factor_kg_per_kwh": "Factor de emisión de CO2 (kg CO2 por kWh)",
+          "tree_kg_co2_per_year": "CO2 absorbido por árbol joven plantado y por año (kg)"
         },
         "data_description": {
           "scan_interval_real_data": "Frecuencia con la que se obtienen los datos en vivo (potencia/tensión/corriente). Mínimo 10 s, valor por defecto 60 s. Valores más bajos sobrecargan el DTU.",
@@ -64,7 +66,9 @@
           "backoff_initial_s": "Retardo antes del primer reintento. Por defecto 0,5 s. El retardo se duplica tras cada intento fallido hasta el máximo.",
           "backoff_max_s": "Límite superior del backoff exponencial. Por defecto 4 s. Debe ser al menos igual al valor inicial.",
           "dtu_unreachable_threshold_min": "Tiempo durante el cual el DTU debe estar en silencio antes de generar una Repair Issue. Importante: tras un cambio de opciones, este contador se reinicia — la alerta no podrá dispararse hasta que se complete al menos una consulta exitosa y posteriormente transcurra el umbral entero de silencio.",
-          "inverter_offline_threshold_h": "Tiempo durante el cual un inversor debe reportar pérdida de enlace RF antes de generar una Repair Issue. Se reinicia al recargar la integración — el temporizador vuelve a empezar tras cada cambio de opciones."
+          "inverter_offline_threshold_h": "Tiempo durante el cual un inversor debe reportar pérdida de enlace RF antes de generar una Repair Issue. Se reinicia al recargar la integración — el temporizador vuelve a empezar tras cada cambio de opciones.",
+          "co2_factor_kg_per_kwh": "El valor por defecto 0.5 refleja una intensidad de carbono media europea equilibrada. Valores de referencia: Francia/RTE 2024: 0.053 (muy bajo carbono, nuclear), mix UE: 0.30, Alemania: 0.50, valor por defecto de la app Hoymiles: 1.0 (mix carbón, marketing), regiones dominadas por carbón: 1.0+.",
+          "tree_kg_co2_per_year": "El valor por defecto 25 sigue el estándar ADEME (Francia) para un árbol adulto europeo. La app Hoymiles utiliza 18 (árbol joven plantado en fase de crecimiento). Los árboles tropicales adultos pueden alcanzar 50."
         }
       }
     },
@@ -83,7 +87,9 @@
       "pv_voltage": { "name": "Tensión FV" },
       "pv_current": { "name": "Corriente FV" },
       "alarm_code": { "name": "Código de alarma" },
-      "alarm_count": { "name": "Recuento de alarmas" }
+      "alarm_count": { "name": "Recuento de alarmas" },
+      "co2_savings_today": { "name": "Ahorro de CO2 hoy" },
+      "equivalent_trees_planted_today": { "name": "Equivalente jóvenes árboles plantados hoy" }
     },
     "binary_sensor": {
       "alarm": { "name": "Alarma" },

@@ -12,6 +12,7 @@ from homeassistant.helpers.entity import EntityCategory
 
 from custom_components.hoymiles_dtupro.sensor import (
     INVERTER_SENSORS,
+    PLANT_ENVIRONMENTAL_SENSORS,
     PLANT_SENSORS,
     PORT_SENSORS,
     HoymilesInverterPortSensor,
@@ -40,7 +41,7 @@ async def test_setup_creates_correct_sensor_count(
     mock_config_entry: MockConfigEntry,
     mock_plant_data: PlantData,
 ) -> None:
-    """Sensor count: 3 plant + N_inv*5 inverter + N_inv*N_ports*5 port."""
+    """Sensor count: (3 plant + 2 environmental) + N_inv*5 inverter + N_inv*N_ports*5 port."""
     mock_config_entry.add_to_hass(hass)
 
     fake_client = AsyncMock()
@@ -55,6 +56,7 @@ async def test_setup_creates_correct_sensor_count(
     ]
     expected_count = (
         len(PLANT_SENSORS)
+        + len(PLANT_ENVIRONMENTAL_SENSORS)
         + _N_INVERTERS * len(INVERTER_SENSORS)
         + _N_INVERTERS * _N_PORTS * len(PORT_SENSORS)
     )
@@ -212,7 +214,7 @@ def test_no_unexpected_diagnostic_categorisation() -> None:
     """Only the alarm sensors should be marked DIAGNOSTIC — not energy or power."""
     diagnostic_keys = {
         d.key
-        for sensors in (PLANT_SENSORS, INVERTER_SENSORS, PORT_SENSORS)
+        for sensors in (PLANT_SENSORS, PLANT_ENVIRONMENTAL_SENSORS, INVERTER_SENSORS, PORT_SENSORS)
         for d in sensors
         if d.entity_category == EntityCategory.DIAGNOSTIC
     }
