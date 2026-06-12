@@ -42,66 +42,43 @@ from [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
-- **OptionsFlow** — eight user-tunable knobs are now reachable from the
-  integration's *Configure* button in the HA UI, without requiring a removal
-  and re-add of the integration:
-  - **Polling**: `scan_interval_real_data` (10–600 s) and
-    `scan_interval_metadata` (60–3600 s).
-  - **Modbus client**: `timeout_s` (2–30 s), `retry_attempts` (1–10),
-    `backoff_initial_s` (0–5 s), `backoff_max_s` (0.5–30 s) — these wire into
-    the bounded retry / exponential backoff machinery introduced in v1.5.0.
-  - **Repair Issue thresholds**: `dtu_unreachable_threshold_min` (1–60 min)
-    and `inverter_offline_threshold_h` (1–168 h) — replaces the previously
-    hardcoded `ISSUE_DTU_UNREACHABLE_THRESHOLD` and
-    `ISSUE_INVERTER_OFFLINE_THRESHOLD`.
-- Cross-field validation: `backoff_initial_s` cannot exceed `backoff_max_s`
-  (form error `backoff_initial_above_max`).
-- Update listener wired via `entry.add_update_listener` — the integration
-  reloads automatically when options change so new values take effect
-  immediately.
-- New `tests/test_options_flow.py` (7 cases): migration v1.1→v1.2,
-  options-form rendering, valid-submission persistence, parametrised
-  out-of-range rejection, and inverted-backoff cross-field error.
-- Extra coordinator tests asserting custom thresholds are honoured by both
-  coordinators (real-data and metadata).
-- PR #3 follow-ups (from senior code review): `_open()` failure path now
-  exercised in `tests/test_client.py`, exception `__cause__` chain
-  preservation asserted, and the `# type: ignore[misc]` rationale comment
-  expanded to explain why mypy cannot prove the loop invariant.
+- **Documentation — `docs/utility_meter.md`**: dedicated guide for setting
+  up daily / monthly / yearly energy reporting on the HA Energy dashboard
+  via the built-in `utility_meter` integration. Three worked examples
+  (per-MPPT-port, per-inverter via template sensor, whole-plant) and a
+  caveat block explaining why the `state_class: total` we declare on
+  lifetime sensors composes correctly with `utility_meter`.
+- **README — Compatible devices** section: now explicit about the
+  officially supported model (DTU-Pro V00.07.04 / HMS-1000-2T plant),
+  the likely-compatible community-reported list (DTU-Pro-S, DTU-W100,
+  DTU-G100, DTU-Pro v2), and the known-incompatible models with their
+  alternatives (HMS-WiFi → suaveolent/ha-hoymiles-wifi, DTU-Lite).
 
 ### Changed
 
-- **Schema migration**: `MINOR_VERSION` bumped from 1 to 2. Existing entries
-  carrying `scan_interval_real_data` in `entry.data` are migrated on first
-  load — the value moves to `entry.options`. Net effect for existing users:
-  the previously collected scan interval (which was silently ignored — see
-  Fixed) is now actually honoured by the coordinator.
-- `HoymilesRealDataCoordinator` and `HoymilesMetadataCoordinator` constructors
-  accept new `dtu_unreachable_threshold` / `inverter_offline_threshold`
-  kwargs. Defaults preserve previous behaviour (5 min / 6 h).
-- `async_setup_entry` reads all 8 options via `entry.options.get(KEY,
-  DEFAULT)` and passes them to the client and coordinators.
-- Translations updated for EN, FR, DE, ES — new `options.step.init` block
-  with title, description, eight `data` labels, and eight `data_description`
-  hints (including the post-reload threshold-reset behaviour).
-- CHANGELOG `[Unreleased]` housekeeping: removed a duplicate `[Unreleased]`
-  block whose content shipped in v1.4.0 (PR #3 review follow-up).
+- **Mypy strict mode** now scopes the **full integration package**
+  (`custom_components/hoymiles_dtupro/`), not just the pure-api sub-package.
+  Untyped HA core / voluptuous / pymodbus imports are silenced via
+  `disable_error_code = ["import-not-found", "import-untyped"]` and
+  per-module overrides — same approach as Home Assistant core's own
+  `mypy.ini`. CI now runs `mypy custom_components/hoymiles_dtupro` so
+  annotation drift in the HA layer is caught alongside the api drift.
+- **`PARALLEL_UPDATES = 0`** declared at module level in `sensor.py` and
+  `binary_sensor.py`. Required by the **Silver** quality_scale tier.
+  The DataUpdateCoordinator already serialises Modbus polling, so this
+  declaration delegates the parallelism decision to HA core rather than
+  imposing a redundant platform-level limit.
+- **`HoymilesAlarmBinarySensor` and `HoymilesLinkBinarySensor`** now
+  declare a class-level `entity_description: BinarySensorEntityDescription`
+  annotation, mirroring the pattern already used in the sensor platform.
+  Required for mypy strict to accept the `__init__` assignment.
 
-### Fixed
+### i18n
 
-- **`scan_interval_real_data` was collected by the user step but never read
-  by `async_setup_entry`**, so coordinators always polled at the hardcoded
-  60 s default. The migration above wires the value end-to-end.
-
-### Not Changed (intentional)
-
-- The reconfigure-step probe still uses the hardcoded `DEFAULT_TIMEOUT_S`
-  (5 s) for the connectivity check. Captured as deferred technical debt for
-  PR #5.
-- HA's `last_update_success_time` is `None` immediately after a reload, so
-  lowering `dtu_unreachable_threshold_min` does not retroactively fire the
-  issue — the threshold counter restarts from the next successful poll.
-  Documented in the relevant `data_description` translation strings.
+- **`reconfigure` step** in `strings.json` and the four translations
+  (EN/FR/DE/ES) now ships a full `data_description` block (host / port /
+  unit_id) — mirrors the `user` step's hints. Required for the Silver
+  `docs-configuration-parameters` rule.
 
 ## [1.4.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.3.0...v1.4.0) (2026-06-11)
 
