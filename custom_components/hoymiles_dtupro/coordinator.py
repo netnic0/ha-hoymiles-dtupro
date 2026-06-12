@@ -59,6 +59,7 @@ class HoymilesRealDataCoordinator(TimestampDataUpdateCoordinator[PlantData]):
         entry_id: str,
         host: str,
         update_interval: timedelta = DEFAULT_SCAN_INTERVAL_REAL_DATA,
+        dtu_unreachable_threshold: timedelta = ISSUE_DTU_UNREACHABLE_THRESHOLD,
     ) -> None:
         super().__init__(
             hass,
@@ -70,6 +71,7 @@ class HoymilesRealDataCoordinator(TimestampDataUpdateCoordinator[PlantData]):
         self._client = client
         self._entry_id = entry_id
         self._host = host
+        self._dtu_unreachable_threshold = dtu_unreachable_threshold
 
     @property
     def issue_id(self) -> str:
@@ -105,7 +107,7 @@ class HoymilesRealDataCoordinator(TimestampDataUpdateCoordinator[PlantData]):
             return
 
         elapsed = dt_util.utcnow() - last_ok
-        if elapsed < ISSUE_DTU_UNREACHABLE_THRESHOLD:
+        if elapsed < self._dtu_unreachable_threshold:
             return
 
         ir.async_create_issue(
@@ -144,6 +146,7 @@ class HoymilesMetadataCoordinator(TimestampDataUpdateCoordinator[PlantData]):
         *,
         entry_id: str,
         update_interval: timedelta = DEFAULT_SCAN_INTERVAL_METADATA,
+        inverter_offline_threshold: timedelta = ISSUE_INVERTER_OFFLINE_THRESHOLD,
     ) -> None:
         super().__init__(
             hass,
@@ -154,8 +157,9 @@ class HoymilesMetadataCoordinator(TimestampDataUpdateCoordinator[PlantData]):
         )
         self._client = client
         self._entry_id = entry_id
+        self._inverter_offline_threshold = inverter_offline_threshold
         # Keyed by inverter serial. Resets on integration reload — accepted
-        # trade-off: the 6h timer restarts on reload, which is consistent with
+        # trade-off: the threshold timer restarts on reload, which is consistent with
         # `is_persistent=False` Repair Issues that already do not survive HA restart.
         self._last_seen_online: dict[str, datetime] = {}
 
@@ -202,7 +206,7 @@ class HoymilesMetadataCoordinator(TimestampDataUpdateCoordinator[PlantData]):
                 # Never seen online since this integration load — do nothing.
                 continue
 
-            if now - last_seen < ISSUE_INVERTER_OFFLINE_THRESHOLD:
+            if now - last_seen < self._inverter_offline_threshold:
                 # Within tolerance window — also clear any stale issue from
                 # a previous longer-than-threshold gap that has since resumed.
                 ir.async_delete_issue(self.hass, DOMAIN, self.inverter_issue_id(serial))

@@ -184,7 +184,9 @@ class HoymilesAsyncClient:
             # HoymilesProtocolError is *not* caught here — fail-fast on
             # deterministic frames; retrying wastes wall-clock time.
         # `last_err` is always set: the loop runs >= 1 time and every except
-        # branch assigns it before the loop can exit through `break`.
+        # branch assigns it before `break`. mypy cannot prove this across loop
+        # iterations (the [misc] suppression silences the resulting "raising a
+        # possibly-None value" warning, NOT a real bug).
         raise last_err  # type: ignore[misc]
 
     # ─── Internal helpers ─────────────────────────────────────────────────

@@ -7,14 +7,12 @@
         "data": {
           "host": "Hôte ou adresse IP",
           "port": "Port Modbus TCP",
-          "unit_id": "Identifiant Modbus (unit ID)",
-          "scan_interval_real_data": "Intervalle de scan des données en temps réel (secondes)"
+          "unit_id": "Identifiant Modbus (unit ID)"
         },
         "data_description": {
           "host": "Adresse IP locale du DTU-Pro (ex. 192.0.2.1).",
           "port": "Le port Modbus TCP par défaut est 502.",
-          "unit_id": "ID esclave Modbus. Par défaut 1 ; ne modifier qu'en connaissance de cause.",
-          "scan_interval_real_data": "Fréquence de récupération des données en temps réel (puissance/tension/courant). Minimum 10 secondes. Valeur par défaut : 60 secondes pour ne pas surcharger le DTU."
+          "unit_id": "ID esclave Modbus. Par défaut 1 ; ne modifier qu'en connaissance de cause."
         }
       },
       "reconfigure": {
@@ -23,8 +21,7 @@
         "data": {
           "host": "Hôte ou adresse IP",
           "port": "Port Modbus TCP",
-          "unit_id": "Identifiant Modbus (unit ID)",
-          "scan_interval_real_data": "Intervalle de scan des données en temps réel (secondes)"
+          "unit_id": "Identifiant Modbus (unit ID)"
         }
       }
     },
@@ -37,6 +34,37 @@
       "already_configured": "L'appareil est déjà configuré.",
       "another_device": "Un autre DTU répond à cette adresse. Configuration annulée pour éviter tout mélange d'appareils.",
       "reconfigure_successful": "Reconfiguration réussie."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options du DTU-Pro Hoymiles",
+        "description": "Ajustez l'intégration à votre installation. Les valeurs par défaut sont prudentes et adaptées à un usage en production.",
+        "data": {
+          "scan_interval_real_data": "Intervalle de scan des données en temps réel (secondes)",
+          "scan_interval_metadata": "Intervalle de scan des métadonnées (secondes)",
+          "timeout_s": "Délai d'attente Modbus TCP (secondes)",
+          "retry_attempts": "Nombre de tentatives par requête",
+          "backoff_initial_s": "Délai initial entre tentatives (secondes)",
+          "backoff_max_s": "Délai maximal entre tentatives (secondes)",
+          "dtu_unreachable_threshold_min": "Seuil d'alerte « DTU injoignable » (minutes)",
+          "inverter_offline_threshold_h": "Seuil d'alerte « onduleur hors ligne » (heures)"
+        },
+        "data_description": {
+          "scan_interval_real_data": "Fréquence de récupération des données en temps réel (puissance/tension/courant). Minimum 10 s, défaut 60 s. Des valeurs plus basses stressent le DTU.",
+          "scan_interval_metadata": "Fréquence de récupération des données à évolution lente (statut RF, compteur d'alarmes). Minimum 60 s, défaut 300 s.",
+          "timeout_s": "Temps d'attente d'une réponse Modbus avant expiration. Défaut 5 s.",
+          "retry_attempts": "Nombre maximal de tentatives par requête en cas d'erreur transitoire (connexion perdue, timeout). Chaque tentative ouvre une nouvelle socket TCP. Défaut 3, maximum 10.",
+          "backoff_initial_s": "Délai avant la première nouvelle tentative. Défaut 0,5 s. Ce délai double à chaque échec, jusqu'au maximum.",
+          "backoff_max_s": "Borne supérieure du backoff exponentiel. Défaut 4 s. Doit être au moins égal au délai initial.",
+          "dtu_unreachable_threshold_min": "Durée de silence du DTU avant déclenchement d'une Repair Issue. Important : après un changement d'option, ce compteur est remis à zéro — l'alerte ne peut se déclencher qu'après au moins une lecture réussie suivie du seuil complet de silence.",
+          "inverter_offline_threshold_h": "Durée pendant laquelle un onduleur doit signaler une perte de liaison RF avant qu'une Repair Issue ne soit créée. Le compteur est remis à zéro à chaque rechargement de l'intégration (changement d'options inclus)."
+        }
+      }
+    },
+    "error": {
+      "backoff_initial_above_max": "Le délai initial ne peut pas dépasser le délai maximal."
     }
   },
   "entity": {

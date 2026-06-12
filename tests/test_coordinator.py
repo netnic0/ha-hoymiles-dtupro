@@ -178,3 +178,75 @@ async def test_real_data_coordinator_clears_dtu_unreachable_on_success(
     await coord.async_refresh()
 
     assert ir.async_get(hass).async_get_issue("hoymiles_dtupro", coord.issue_id) is None
+
+
+# ─── Custom thresholds (PR #4) ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_real_data_coordinator_honours_custom_dtu_unreachable_threshold(
+    hass: HomeAssistant,
+) -> None:
+    """When `dtu_unreachable_threshold` kwarg is given, _maybe_raise uses it.
+
+    We assert by looking at the instance attribute rather than invoking the
+    full Repair Issue lifecycle (which is already covered by test_repairs).
+    """
+    client = AsyncMock(spec=HoymilesAsyncClient)
+    custom_threshold = timedelta(minutes=2)
+
+    coord = HoymilesRealDataCoordinator(
+        hass,
+        client,
+        entry_id="test_entry",
+        host="192.0.2.1",
+        dtu_unreachable_threshold=custom_threshold,
+    )
+
+    assert coord._dtu_unreachable_threshold == custom_threshold
+
+
+@pytest.mark.asyncio
+async def test_metadata_coordinator_honours_custom_inverter_offline_threshold(
+    hass: HomeAssistant,
+) -> None:
+    """The inverter_offline_threshold kwarg drives `_evaluate_inverter_offline_issues`."""
+    client = AsyncMock(spec=HoymilesAsyncClient)
+    custom_threshold = timedelta(hours=2)
+
+    coord = HoymilesMetadataCoordinator(
+        hass,
+        client,
+        entry_id="test_entry",
+        inverter_offline_threshold=custom_threshold,
+    )
+
+    assert coord._inverter_offline_threshold == custom_threshold
+
+
+@pytest.mark.asyncio
+async def test_real_data_coordinator_default_threshold_preserved(
+    hass: HomeAssistant,
+) -> None:
+    """Without an explicit kwarg, the coordinator falls back to the module default."""
+    from custom_components.hoymiles_dtupro.const import ISSUE_DTU_UNREACHABLE_THRESHOLD
+
+    client = AsyncMock(spec=HoymilesAsyncClient)
+
+    coord = HoymilesRealDataCoordinator(hass, client, entry_id="test_entry", host="192.0.2.1")
+
+    assert coord._dtu_unreachable_threshold == ISSUE_DTU_UNREACHABLE_THRESHOLD
+
+
+@pytest.mark.asyncio
+async def test_metadata_coordinator_default_threshold_preserved(
+    hass: HomeAssistant,
+) -> None:
+    """Without an explicit kwarg, the coordinator falls back to the module default."""
+    from custom_components.hoymiles_dtupro.const import ISSUE_INVERTER_OFFLINE_THRESHOLD
+
+    client = AsyncMock(spec=HoymilesAsyncClient)
+
+    coord = HoymilesMetadataCoordinator(hass, client, entry_id="test_entry")
+
+    assert coord._inverter_offline_threshold == ISSUE_INVERTER_OFFLINE_THRESHOLD

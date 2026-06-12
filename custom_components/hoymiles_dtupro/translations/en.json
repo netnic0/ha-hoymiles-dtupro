@@ -7,14 +7,12 @@
         "data": {
           "host": "Host or IP address",
           "port": "Modbus TCP port",
-          "unit_id": "Modbus unit ID",
-          "scan_interval_real_data": "Live data scan interval (seconds)"
+          "unit_id": "Modbus unit ID"
         },
         "data_description": {
           "host": "Local IP of the DTU-Pro (e.g. 192.0.2.1).",
           "port": "Default Modbus TCP port is 502.",
-          "unit_id": "Modbus slave ID. Default is 1; change only if you know what you're doing.",
-          "scan_interval_real_data": "How often to fetch live power/voltage/current data. Minimum 10 seconds. Default is 60 seconds to avoid stressing the DTU."
+          "unit_id": "Modbus slave ID. Default is 1; change only if you know what you're doing."
         }
       },
       "reconfigure": {
@@ -23,8 +21,7 @@
         "data": {
           "host": "Host or IP address",
           "port": "Modbus TCP port",
-          "unit_id": "Modbus unit ID",
-          "scan_interval_real_data": "Live data scan interval (seconds)"
+          "unit_id": "Modbus unit ID"
         }
       }
     },
@@ -37,6 +34,37 @@
       "already_configured": "Device is already configured.",
       "another_device": "A different DTU is responding at this host. Configuration aborted to avoid mixing devices.",
       "reconfigure_successful": "Reconfiguration successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Hoymiles DTU-Pro options",
+        "description": "Tune the integration to your installation. Default values are conservative and safe for production use.",
+        "data": {
+          "scan_interval_real_data": "Live data scan interval (seconds)",
+          "scan_interval_metadata": "Metadata scan interval (seconds)",
+          "timeout_s": "Modbus TCP timeout (seconds)",
+          "retry_attempts": "Retry attempts per fetch",
+          "backoff_initial_s": "Initial retry backoff (seconds)",
+          "backoff_max_s": "Maximum retry backoff (seconds)",
+          "dtu_unreachable_threshold_min": "DTU unreachable alert threshold (minutes)",
+          "inverter_offline_threshold_h": "Inverter offline alert threshold (hours)"
+        },
+        "data_description": {
+          "scan_interval_real_data": "How often to fetch live power/voltage/current data. Minimum 10 s, default 60 s. Lower values stress the DTU.",
+          "scan_interval_metadata": "How often to fetch slow-changing data (link status, alarm count). Minimum 60 s, default 300 s.",
+          "timeout_s": "How long to wait for a single Modbus response before timing out. Default 5 s.",
+          "retry_attempts": "Maximum attempts per fetch on transient errors (connection lost, timeout). Each attempt opens a fresh TCP socket. Default 3, max 10.",
+          "backoff_initial_s": "Delay before the first retry. Default 0.5 s. The delay doubles after each failed attempt up to the maximum.",
+          "backoff_max_s": "Upper bound for the exponential backoff. Default 4 s. Must be at least equal to the initial backoff.",
+          "dtu_unreachable_threshold_min": "How long the DTU must be silent before raising a Repair Issue. Note: after a settings change, this counter is reset — the issue cannot fire until at least one successful poll occurs and is then followed by the threshold of silence.",
+          "inverter_offline_threshold_h": "How long an inverter must report no RF link before raising a Repair Issue. Reset on integration reload — the timer restarts after every options change."
+        }
+      }
+    },
+    "error": {
+      "backoff_initial_above_max": "Initial backoff cannot be greater than the maximum backoff."
     }
   },
   "entity": {

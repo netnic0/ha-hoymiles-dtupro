@@ -20,74 +20,66 @@ from [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Added
 
-- **Modbus client resilience** — bounded retry with exponential backoff for
-  transient TCP failures. Connection drops and timeouts now trigger up to 3
-  attempts (default) within a single `async_get_plant_data` /
-  `async_get_inverters` / `async_get_dtu_serial` fetch, with 0.5 → 1 → 2 s
-  backoff capped at 4 s. Worst-case wall-clock ~16.5 s, well below the 60 s
-  polling interval and the 5-min `dtu_unreachable` Repair Issue threshold.
-  Each attempt opens a fresh TCP socket (transactional retry at the public-API
-  boundary).
-- New `HoymilesAsyncClient` constructor kwargs `retry_attempts`,
-  `backoff_initial_s`, `backoff_max_s` (defaults in `api/const.py`). PR #4 will
-  expose these via the OptionsFlow.
-- Three `tests/test_client.py` cases covering retry-on-connection-error,
-  retry-on-timeout, no-retry-on-protocol-error, and an additional
-  exhaustion-with-fresh-socket-contract assertion (`connect.await_count == 3`).
+- **OptionsFlow** — eight user-tunable knobs are now reachable from the
+  integration's *Configure* button in the HA UI, without requiring a removal
+  and re-add of the integration:
+  - **Polling**: `scan_interval_real_data` (10–600 s) and
+    `scan_interval_metadata` (60–3600 s).
+  - **Modbus client**: `timeout_s` (2–30 s), `retry_attempts` (1–10),
+    `backoff_initial_s` (0–5 s), `backoff_max_s` (0.5–30 s) — these wire into
+    the bounded retry / exponential backoff machinery introduced in v1.5.0.
+  - **Repair Issue thresholds**: `dtu_unreachable_threshold_min` (1–60 min)
+    and `inverter_offline_threshold_h` (1–168 h) — replaces the previously
+    hardcoded `ISSUE_DTU_UNREACHABLE_THRESHOLD` and
+    `ISSUE_INVERTER_OFFLINE_THRESHOLD`.
+- Cross-field validation: `backoff_initial_s` cannot exceed `backoff_max_s`
+  (form error `backoff_initial_above_max`).
+- Update listener wired via `entry.add_update_listener` — the integration
+  reloads automatically when options change so new values take effect
+  immediately.
+- New `tests/test_options_flow.py` (7 cases): migration v1.1→v1.2,
+  options-form rendering, valid-submission persistence, parametrised
+  out-of-range rejection, and inverted-backoff cross-field error.
+- Extra coordinator tests asserting custom thresholds are honoured by both
+  coordinators (real-data and metadata).
+- PR #3 follow-ups (from senior code review): `_open()` failure path now
+  exercised in `tests/test_client.py`, exception `__cause__` chain
+  preservation asserted, and the `# type: ignore[misc]` rationale comment
+  expanded to explain why mypy cannot prove the loop invariant.
 
 ### Changed
 
-- Public methods `async_get_dtu_serial`, `async_get_inverters`, and
-  `async_get_plant_data` now delegate to internal `_fetch_*_once` helpers
-  through a single `_fetch_with_retry` orchestrator. **No change to the
-  external API contract.**
-- `HoymilesProtocolError` is **not** retried — these errors are deterministic
-  (malformed frame at a specific slot) and retrying wastes wall-clock time.
-- `api/const.py`: dead constant `DEFAULT_RETRIES` renamed to
-  `DEFAULT_RETRY_ATTEMPTS` and is now actually wired into the client. Two new
-  constants `DEFAULT_BACKOFF_INITIAL_S` and `DEFAULT_BACKOFF_MAX_S` were added.
+- **Schema migration**: `MINOR_VERSION` bumped from 1 to 2. Existing entries
+  carrying `scan_interval_real_data` in `entry.data` are migrated on first
+  load — the value moves to `entry.options`. Net effect for existing users:
+  the previously collected scan interval (which was silently ignored — see
+  Fixed) is now actually honoured by the coordinator.
+- `HoymilesRealDataCoordinator` and `HoymilesMetadataCoordinator` constructors
+  accept new `dtu_unreachable_threshold` / `inverter_offline_threshold`
+  kwargs. Defaults preserve previous behaviour (5 min / 6 h).
+- `async_setup_entry` reads all 8 options via `entry.options.get(KEY,
+  DEFAULT)` and passes them to the client and coordinators.
+- Translations updated for EN, FR, DE, ES — new `options.step.init` block
+  with title, description, eight `data` labels, and eight `data_description`
+  hints (including the post-reload threshold-reset behaviour).
+- CHANGELOG `[Unreleased]` housekeeping: removed a duplicate `[Unreleased]`
+  block whose content shipped in v1.4.0 (PR #3 review follow-up).
 
-### Added
+### Fixed
 
-- **Repair Issues** powered by `homeassistant.helpers.issue_registry`:
-  - `dtu_unreachable_<entry_id>` — fires (severity ERROR) when the DTU has not
-    answered for more than **5 minutes**, and is automatically cleared on the
-    next successful poll.
-  - `inverter_offline_<serial>_<entry_id>` — fires (severity WARNING) per
-    inverter once `link_status=False` has held continuously for more than
-    **6 hours**. **Guard:** an inverter that has *never* been observed online
-    since this integration load will not raise the issue — this prevents
-    false positives on freshly added hardware.
-- **Diagnostics enriched** with a new `coordinator_state` section exposing,
-  for each coordinator, the runtime values of `last_update_success`,
-  `last_update_success_time`, `update_interval_seconds`, `online_inverter_count`,
-  and `inverter_count`.
-- New translation keys (`issues.dtu_unreachable`, `issues.inverter_offline_long`)
-  in `strings.json` and all four bundled languages (EN/FR/DE/ES).
-- Extensive `tests/test_repairs.py` covering: below-threshold no-op, above-threshold
-  fire, recovery clears, never-seen-online guard.
-
-### Changed
-
-- **Coordinators migrated** from `DataUpdateCoordinator` to
-  `TimestampDataUpdateCoordinator`. This is the HA-blessed base class that
-  exposes `last_update_success_time` natively — required to compute the
-  unreachable threshold without reinventing state tracking.
-- Coordinator constructors now require `entry_id` (and `host` for the real-data
-  coordinator). This change is internal: external callers must pass these
-  values when instantiating coordinators directly. The integration's
-  `async_setup_entry` is updated accordingly.
-- `async_unload_entry` now calls `async_delete_issue` for every Repair Issue
-  the integration could have raised, preventing stale issue cards after an
-  integration reload.
+- **`scan_interval_real_data` was collected by the user step but never read
+  by `async_setup_entry`**, so coordinators always polled at the hardcoded
+  60 s default. The migration above wires the value end-to-end.
 
 ### Not Changed (intentional)
 
-- Thresholds (5 min / 6 h) are hardcoded in `const.py`. PR #4 (OptionsFlow)
-  will make them user-configurable.
-- Diagnostics deliberately omit raw Modbus frames and per-inverter
-  `_last_seen_online` timestamps to avoid leaking installation-specific data
-  in public bug reports.
+- The reconfigure-step probe still uses the hardcoded `DEFAULT_TIMEOUT_S`
+  (5 s) for the connectivity check. Captured as deferred technical debt for
+  PR #5.
+- HA's `last_update_success_time` is `None` immediately after a reload, so
+  lowering `dtu_unreachable_threshold_min` does not retroactively fire the
+  issue — the threshold counter restarts from the next successful poll.
+  Documented in the relevant `data_description` translation strings.
 
 ## [1.4.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.3.0...v1.4.0) (2026-06-11)
 
@@ -225,49 +217,6 @@ from [Conventional Commits](https://www.conventionalcommits.org/).
 
 * **api,manifest:** pymodbus 3.7+ device_id and hassfest manifest order ([7b7438f](https://github.com/netnic0/ha-hoymiles-dtupro/commit/7b7438fc9b21172447247f46930585759ebc712a))
 * **ci:** satisfy ruff lint and format on first CI run ([e9ef5f6](https://github.com/netnic0/ha-hoymiles-dtupro/commit/e9ef5f634dc79121b9b28f60309f3ffbb650d2fa))
-
-## [Unreleased]
-
-### Changed
-
-- **UX**: Energy sensors (`today_production`, `total_production`) now suggest
-  **kWh** as their display unit via `suggested_unit_of_measurement`. Storage
-  remains in Wh — historical data is unaffected, HA only adapts the displayed
-  unit so values like `9 935 738 Wh` show up as `9 935.7 kWh`.
-- **UX**: Diagnostic entities (`alarm_code`, `alarm_count`) are now categorised as
-  `EntityCategory.DIAGNOSTIC`. They appear under the device's *Diagnostics*
-  section instead of the main entity list. Existing automations that reference
-  these entities continue to work unchanged.
-- **i18n**: Sensor labels clarified for better semantic alignment with the
-  underlying physical quantity. The `key` of every entity is unchanged, so
-  **existing entity IDs are preserved** — only the *friendly name* shown in
-  the UI is updated:
-
-  | key                | EN              | FR                        | DE              | ES             |
-  |--------------------|-----------------|---------------------------|-----------------|----------------|
-  | `pv_power`         | Power           | Puissance instantanée     | Leistung        | Potencia       |
-  | `today_production` | Energy today    | Énergie du jour           | Energie heute   | Energía hoy    |
-  | `total_production` | Lifetime energy | Énergie totale (cumul)    | Gesamtenergie   | Energía total  |
-
-  **Note for new installs in French locale**: the new labels generate different
-  entity slugs (e.g. `sensor.<dtu>_energie_du_jour` instead of
-  `sensor.<dtu>_production_du_jour`). The bundled
-  `lovelace_examples/full.yaml` and `lovelace_examples/mushroom.yaml` have been
-  updated accordingly.
-
-### Added
-
-- Descriptor-level tests in `tests/test_sensor.py` lock down `state_class`,
-  `suggested_unit_of_measurement`, and `entity_category` for every sensor —
-  preventing accidental regressions on Energy-Dashboard semantics.
-
-### Not Changed (intentional)
-
-- `state_class` of `total_production` remains `TOTAL` (not `TOTAL_INCREASING`).
-  Reason: the Hoymiles DTU resets the per-port lifetime counter at midnight
-  (see commit `13b3a13`). `TOTAL_INCREASING` would trigger HA recorder warnings
-  on each reset; `TOTAL` handles this correctly while still feeding long-term
-  statistics.
 
 ## [0.1.0-alpha.1] — 2026-06-04
 

@@ -282,3 +282,55 @@ async def test_async_get_plant_data_propagates_timeout_after_exhaustion(
             await client.async_get_plant_data()
 
     assert fake_pymodbus_client.connect.await_count == 2
+
+
+async def test_async_get_plant_data_retries_on_open_failure(
+    fake_pymodbus_client,
+) -> None:
+    """A failure during _open() (connect raising OSError) triggers retry.
+
+    Covers a code path that the read_holding_registers retry tests do NOT
+    exercise: the failure originates BEFORE any register read, in the
+    `client.connect()` call inside `_open`.
+    """
+    success = _plant_data_success_sequence()
+    fake_pymodbus_client.connect.side_effect = [OSError("no route"), True]
+    fake_pymodbus_client.read_holding_registers.side_effect = success
+
+    with _patch_pymodbus(fake_pymodbus_client):
+        client = HoymilesAsyncClient(
+            host="192.0.2.10",
+            backoff_initial_s=0.0,
+            backoff_max_s=0.0,
+        )
+        plant = await client.async_get_plant_data()
+
+    assert plant.dtu_serial == "AABBCCDDEEFF"
+    # 2 attempts: first connect raised, second succeeded.
+    assert fake_pymodbus_client.connect.await_count == 2
+
+
+async def test_async_get_plant_data_preserves_exception_cause(
+    fake_pymodbus_client,
+) -> None:
+    """After all retries exhaust, the raised HoymilesError keeps the original
+    OSError chained via __cause__ — the underlying network error is not lost."""
+    fake_pymodbus_client.read_holding_registers.side_effect = [
+        ConnectionError("first"),
+        ConnectionError("second"),
+    ]
+
+    with _patch_pymodbus(fake_pymodbus_client):
+        client = HoymilesAsyncClient(
+            host="192.0.2.10",
+            retry_attempts=2,
+            backoff_initial_s=0.0,
+            backoff_max_s=0.0,
+        )
+        with pytest.raises(HoymilesConnectionError) as exc_info:
+            await client.async_get_plant_data()
+
+    # The HoymilesConnectionError wraps the original OSError-family exception
+    # via `raise ... from err` in `_read_holding_registers`.
+    assert exc_info.value.__cause__ is not None
+    assert isinstance(exc_info.value.__cause__, ConnectionError)

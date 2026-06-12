@@ -7,14 +7,12 @@
         "data": {
           "host": "Host o dirección IP",
           "port": "Puerto Modbus TCP",
-          "unit_id": "Identificador Modbus (unit ID)",
-          "scan_interval_real_data": "Intervalo de sondeo de datos en vivo (segundos)"
+          "unit_id": "Identificador Modbus (unit ID)"
         },
         "data_description": {
           "host": "IP local del DTU-Pro (p. ej. 192.0.2.1).",
           "port": "El puerto Modbus TCP por defecto es 502.",
-          "unit_id": "ID de esclavo Modbus. Por defecto 1; cámbialo solo si sabes lo que haces.",
-          "scan_interval_real_data": "Frecuencia con la que se obtienen los datos en vivo (potencia/tensión/corriente). Mínimo 10 segundos. El valor por defecto es 60 segundos para no sobrecargar el DTU."
+          "unit_id": "ID de esclavo Modbus. Por defecto 1; cámbialo solo si sabes lo que haces."
         }
       },
       "reconfigure": {
@@ -23,8 +21,7 @@
         "data": {
           "host": "Host o dirección IP",
           "port": "Puerto Modbus TCP",
-          "unit_id": "Identificador Modbus (unit ID)",
-          "scan_interval_real_data": "Intervalo de sondeo de datos en vivo (segundos)"
+          "unit_id": "Identificador Modbus (unit ID)"
         }
       }
     },
@@ -37,6 +34,37 @@
       "already_configured": "El dispositivo ya está configurado.",
       "another_device": "En esta dirección responde un DTU distinto. Se ha cancelado la configuración para evitar mezclar dispositivos.",
       "reconfigure_successful": "Reconfiguración correcta."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones de Hoymiles DTU-Pro",
+        "description": "Ajusta la integración a tu instalación. Los valores por defecto son conservadores y seguros para uso en producción.",
+        "data": {
+          "scan_interval_real_data": "Intervalo de sondeo de datos en vivo (segundos)",
+          "scan_interval_metadata": "Intervalo de sondeo de metadatos (segundos)",
+          "timeout_s": "Tiempo de espera Modbus TCP (segundos)",
+          "retry_attempts": "Reintentos por consulta",
+          "backoff_initial_s": "Espera inicial entre reintentos (segundos)",
+          "backoff_max_s": "Espera máxima entre reintentos (segundos)",
+          "dtu_unreachable_threshold_min": "Umbral de alerta «DTU inalcanzable» (minutos)",
+          "inverter_offline_threshold_h": "Umbral de alerta «inversor sin conexión» (horas)"
+        },
+        "data_description": {
+          "scan_interval_real_data": "Frecuencia con la que se obtienen los datos en vivo (potencia/tensión/corriente). Mínimo 10 s, valor por defecto 60 s. Valores más bajos sobrecargan el DTU.",
+          "scan_interval_metadata": "Frecuencia con la que se obtienen los datos de evolución lenta (estado RF, contador de alarmas). Mínimo 60 s, por defecto 300 s.",
+          "timeout_s": "Tiempo de espera de una respuesta Modbus antes de expirar. Por defecto 5 s.",
+          "retry_attempts": "Número máximo de intentos por consulta en caso de error transitorio (conexión perdida, timeout). Cada intento abre un nuevo socket TCP. Por defecto 3, máximo 10.",
+          "backoff_initial_s": "Retardo antes del primer reintento. Por defecto 0,5 s. El retardo se duplica tras cada intento fallido hasta el máximo.",
+          "backoff_max_s": "Límite superior del backoff exponencial. Por defecto 4 s. Debe ser al menos igual al valor inicial.",
+          "dtu_unreachable_threshold_min": "Tiempo durante el cual el DTU debe estar en silencio antes de generar una Repair Issue. Importante: tras un cambio de opciones, este contador se reinicia — la alerta no podrá dispararse hasta que se complete al menos una consulta exitosa y posteriormente transcurra el umbral entero de silencio.",
+          "inverter_offline_threshold_h": "Tiempo durante el cual un inversor debe reportar pérdida de enlace RF antes de generar una Repair Issue. Se reinicia al recargar la integración — el temporizador vuelve a empezar tras cada cambio de opciones."
+        }
+      }
+    },
+    "error": {
+      "backoff_initial_above_max": "El backoff inicial no puede ser mayor que el backoff máximo."
     }
   },
   "entity": {

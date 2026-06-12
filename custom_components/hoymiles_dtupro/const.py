@@ -5,15 +5,32 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Final
 
+# Re-export client-construction defaults from the pure api package so the HA
+# layer can wire them into entry.options without duplicating the values.
+from .api.const import (
+    DEFAULT_BACKOFF_INITIAL_S,
+    DEFAULT_BACKOFF_MAX_S,
+    DEFAULT_RETRY_ATTEMPTS,
+    DEFAULT_TIMEOUT_S,
+)
+
 DOMAIN: Final[str] = "hoymiles_dtupro"
 """HA integration domain. Distinct from legacy `hoymiles_dtu` (D1)."""
 
-# ─── Config flow keys ─────────────────────────────────────────────────────────
+# ─── Config flow keys (entry.data — host/port/unit_id only after PR #4) ───────
 CONF_HOST: Final[str] = "host"
 CONF_PORT: Final[str] = "port"
 CONF_UNIT_ID: Final[str] = "unit_id"
+
+# ─── Options flow keys (entry.options — added in PR #4) ───────────────────────
 CONF_SCAN_INTERVAL_REAL_DATA: Final[str] = "scan_interval_real_data"
 CONF_SCAN_INTERVAL_METADATA: Final[str] = "scan_interval_metadata"
+CONF_TIMEOUT_S: Final[str] = "timeout_s"
+CONF_RETRY_ATTEMPTS: Final[str] = "retry_attempts"
+CONF_BACKOFF_INITIAL_S: Final[str] = "backoff_initial_s"
+CONF_BACKOFF_MAX_S: Final[str] = "backoff_max_s"
+CONF_DTU_UNREACHABLE_THRESHOLD_MIN: Final[str] = "dtu_unreachable_threshold_min"
+CONF_INVERTER_OFFLINE_THRESHOLD_H: Final[str] = "inverter_offline_threshold_h"
 
 # ─── Default polling intervals (D6 — multi-coordinator) ────────────────────────
 DEFAULT_SCAN_INTERVAL_REAL_DATA: Final[timedelta] = timedelta(seconds=60)
@@ -25,17 +42,33 @@ DEFAULT_SCAN_INTERVAL_METADATA: Final[timedelta] = timedelta(minutes=5)
 MIN_SCAN_INTERVAL_SECONDS: Final[int] = 10
 """Lower bound enforced by the config flow to avoid hammering the DTU."""
 
-# ─── Repair Issue thresholds (PR #2) ──────────────────────────────────────────
-# Hardcoded for now; PR #4 (OptionsFlow) will make them user-configurable.
+# ─── OptionsFlow voluptuous range bounds (PR #4) ──────────────────────────────
+OPTIONS_SCAN_INTERVAL_REAL_DATA_MIN: Final[int] = 10
+OPTIONS_SCAN_INTERVAL_REAL_DATA_MAX: Final[int] = 600
+OPTIONS_SCAN_INTERVAL_METADATA_MIN: Final[int] = 60
+OPTIONS_SCAN_INTERVAL_METADATA_MAX: Final[int] = 3600
+OPTIONS_TIMEOUT_MIN: Final[float] = 2.0
+OPTIONS_TIMEOUT_MAX: Final[float] = 30.0
+OPTIONS_RETRY_ATTEMPTS_MIN: Final[int] = 1
+OPTIONS_RETRY_ATTEMPTS_MAX: Final[int] = 10
+OPTIONS_BACKOFF_INITIAL_MIN: Final[float] = 0.0
+OPTIONS_BACKOFF_INITIAL_MAX: Final[float] = 5.0
+OPTIONS_BACKOFF_MAX_MIN: Final[float] = 0.5
+OPTIONS_BACKOFF_MAX_MAX: Final[float] = 30.0
+OPTIONS_DTU_UNREACHABLE_MIN_MIN: Final[int] = 1
+OPTIONS_DTU_UNREACHABLE_MIN_MAX: Final[int] = 60
+OPTIONS_INVERTER_OFFLINE_H_MIN: Final[int] = 1
+OPTIONS_INVERTER_OFFLINE_H_MAX: Final[int] = 168
 
+# ─── Repair Issue thresholds (PR #2 hardcoded → PR #4 user-configurable) ──────
 ISSUE_DTU_UNREACHABLE_THRESHOLD: Final[timedelta] = timedelta(minutes=5)
-"""How long the DTU must be unreachable before raising `dtu_unreachable`."""
+"""Default threshold before raising `dtu_unreachable`. Overridable via
+`CONF_DTU_UNREACHABLE_THRESHOLD_MIN` in entry.options (PR #4)."""
 
 ISSUE_INVERTER_OFFLINE_THRESHOLD: Final[timedelta] = timedelta(hours=6)
-"""How long an inverter must report `link_status=False` before raising
-`inverter_offline_long`. Only counts AFTER the inverter has been seen online
-at least once since the integration started — never fires for new hardware
-that has yet to come online for the first time."""
+"""Default threshold before raising `inverter_offline_long`. Only counts AFTER
+the inverter has been seen online at least once since the integration started.
+Overridable via `CONF_INVERTER_OFFLINE_THRESHOLD_H` in entry.options (PR #4)."""
 
 ISSUE_ID_DTU_UNREACHABLE: Final[str] = "dtu_unreachable"
 """Repair issue ID prefix; final ID is `f"{prefix}_{entry.entry_id}"`."""
@@ -45,3 +78,46 @@ ISSUE_ID_INVERTER_OFFLINE: Final[str] = "inverter_offline"
 
 # ─── Logger names declared in manifest.json ───────────────────────────────────
 LOGGER_NAME: Final[str] = f"custom_components.{DOMAIN}"
+
+__all__ = [
+    "CONF_BACKOFF_INITIAL_S",
+    "CONF_BACKOFF_MAX_S",
+    "CONF_DTU_UNREACHABLE_THRESHOLD_MIN",
+    "CONF_HOST",
+    "CONF_INVERTER_OFFLINE_THRESHOLD_H",
+    "CONF_PORT",
+    "CONF_RETRY_ATTEMPTS",
+    "CONF_SCAN_INTERVAL_METADATA",
+    "CONF_SCAN_INTERVAL_REAL_DATA",
+    "CONF_TIMEOUT_S",
+    "CONF_UNIT_ID",
+    "DEFAULT_BACKOFF_INITIAL_S",
+    "DEFAULT_BACKOFF_MAX_S",
+    "DEFAULT_RETRY_ATTEMPTS",
+    "DEFAULT_SCAN_INTERVAL_METADATA",
+    "DEFAULT_SCAN_INTERVAL_REAL_DATA",
+    "DEFAULT_TIMEOUT_S",
+    "DOMAIN",
+    "ISSUE_DTU_UNREACHABLE_THRESHOLD",
+    "ISSUE_ID_DTU_UNREACHABLE",
+    "ISSUE_ID_INVERTER_OFFLINE",
+    "ISSUE_INVERTER_OFFLINE_THRESHOLD",
+    "LOGGER_NAME",
+    "MIN_SCAN_INTERVAL_SECONDS",
+    "OPTIONS_BACKOFF_INITIAL_MAX",
+    "OPTIONS_BACKOFF_INITIAL_MIN",
+    "OPTIONS_BACKOFF_MAX_MAX",
+    "OPTIONS_BACKOFF_MAX_MIN",
+    "OPTIONS_DTU_UNREACHABLE_MIN_MAX",
+    "OPTIONS_DTU_UNREACHABLE_MIN_MIN",
+    "OPTIONS_INVERTER_OFFLINE_H_MAX",
+    "OPTIONS_INVERTER_OFFLINE_H_MIN",
+    "OPTIONS_RETRY_ATTEMPTS_MAX",
+    "OPTIONS_RETRY_ATTEMPTS_MIN",
+    "OPTIONS_SCAN_INTERVAL_METADATA_MAX",
+    "OPTIONS_SCAN_INTERVAL_METADATA_MIN",
+    "OPTIONS_SCAN_INTERVAL_REAL_DATA_MAX",
+    "OPTIONS_SCAN_INTERVAL_REAL_DATA_MIN",
+    "OPTIONS_TIMEOUT_MAX",
+    "OPTIONS_TIMEOUT_MIN",
+]
