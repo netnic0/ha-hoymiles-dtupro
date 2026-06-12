@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.6.1](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.6.0...v1.6.1) (2026-06-12)
+
+
+### Bug Fixes
+
+* **ci:** include test_options_flow and test_repairs in test-ha job ([7bad8f4](https://github.com/netnic0/ha-hoymiles-dtupro/commit/7bad8f4a6a6923181e300a584d0f0e0b93aecf22))
+* **config_flow:** honour options timeout_s in _probe_dtu during reconfigure ([d8eb248](https://github.com/netnic0/ha-hoymiles-dtupro/commit/d8eb248d15a6f871db13c699880bdb4d679129c1))
+* **tests:** autouse enable_custom_integrations for HA-native tests ([78a4327](https://github.com/netnic0/ha-hoymiles-dtupro/commit/78a4327e7d765475c10c6432447d1963780b6c55))
+
 ## [1.6.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.5.0...v1.6.0) (2026-06-12)
 
 
