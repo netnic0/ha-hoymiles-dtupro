@@ -119,5 +119,10 @@ jobs:
       # real Home Assistant core fixtures (hass, enable_custom_integrations).
       # Coverage floor is intentionally lower than the pure-api 80%: the HA layer
       # is glue code; behaviour quality lives in the pure api package's tests.
+      # HA-native coverage is scoped to the HA layer only (sensor, binary_sensor,
+      # coordinator, config_flow, __init__, entity, diagnostics, const) because
+      # the api/ sub-package is exercised by the pure-lib `test` job above with
+      # its own --cov-fail-under=80. Mixing the two scopes here would dilute
+      # the HA-layer score with mocked api modules and falsely report < 95 %.
       - name: pytest HA-native with coverage
-        run: pytest tests/test_config_flow.py tests/test_config_flow_coverage.py tests/test_coordinator.py tests/test_init.py tests/test_init_coverage.py tests/test_sensor.py tests/test_binary_sensor.py tests/test_diagnostics.py tests/test_options_flow.py tests/test_repairs.py --cov=custom_components.hoymiles_dtupro --cov-report=term-missing --cov-fail-under=85
+        run: pytest tests/test_config_flow.py tests/test_config_flow_coverage.py tests/test_coordinator.py tests/test_init.py tests/test_init_coverage.py tests/test_sensor.py tests/test_binary_sensor.py tests/test_diagnostics.py tests/test_options_flow.py tests/test_repairs.py --cov=custom_components.hoymiles_dtupro.__init__ --cov=custom_components.hoymiles_dtupro.binary_sensor --cov=custom_components.hoymiles_dtupro.config_flow --cov=custom_components.hoymiles_dtupro.const --cov=custom_components.hoymiles_dtupro.coordinator --cov=custom_components.hoymiles_dtupro.diagnostics --cov=custom_components.hoymiles_dtupro.entity --cov=custom_components.hoymiles_dtupro.sensor --cov-report=term-missing --cov-fail-under=95
