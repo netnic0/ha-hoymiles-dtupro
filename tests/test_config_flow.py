@@ -34,7 +34,6 @@ async def test_user_step_creates_entry_on_success(
         "host": "192.0.2.1",
         "port": 502,
         "unit_id": 1,
-        "scan_interval_real_data": 30,
     }
 
     with patch(_PROBE_PATH, return_value=mock_dtu_serial):
@@ -57,7 +56,7 @@ async def test_user_step_shows_cannot_connect_on_hoymiles_connection_error(
     enable_custom_integrations,
 ) -> None:
     """When the probe raises HoymilesError, the form re-displays with cannot_connect."""
-    user_input = {"host": "192.0.2.99", "port": 502, "unit_id": 1, "scan_interval_real_data": 30}
+    user_input = {"host": "192.0.2.99", "port": 502, "unit_id": 1}
 
     with patch(_PROBE_PATH, side_effect=HoymilesConnectionError("nope")):
         result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
@@ -74,7 +73,7 @@ async def test_user_step_shows_unknown_on_unexpected_exception(
     enable_custom_integrations,
 ) -> None:
     """A non-Hoymiles exception during probe surfaces as base=unknown."""
-    user_input = {"host": "192.0.2.1", "port": 502, "unit_id": 1, "scan_interval_real_data": 30}
+    user_input = {"host": "192.0.2.1", "port": 502, "unit_id": 1}
 
     with patch(_PROBE_PATH, side_effect=RuntimeError("boom")):
         result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
@@ -93,7 +92,7 @@ async def test_user_step_aborts_on_already_configured(
 ) -> None:
     """Probing twice the same DTU (matching unique_id) aborts the second flow."""
     mock_config_entry.add_to_hass(hass)
-    user_input = {"host": "192.0.2.1", "port": 502, "unit_id": 1, "scan_interval_real_data": 30}
+    user_input = {"host": "192.0.2.1", "port": 502, "unit_id": 1}
 
     with patch(_PROBE_PATH, return_value=mock_dtu_serial):
         result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
@@ -111,7 +110,7 @@ async def test_reconfigure_step_aborts_when_dtu_serial_changes(
 ) -> None:
     """If the new host points to a different DTU, the reconfigure aborts to avoid mixing devices."""
     mock_config_entry.add_to_hass(hass)
-    user_input = {"host": "192.0.2.2", "port": 502, "unit_id": 1, "scan_interval_real_data": 30}
+    user_input = {"host": "192.0.2.2", "port": 502, "unit_id": 1}
 
     with patch(_PROBE_PATH, return_value="111122223333"):
         result = await mock_config_entry.start_reconfigure_flow(hass)
