@@ -46,7 +46,7 @@ LINK_DESC = BinarySensorEntityDescription(
 )
 
 
-class HoymilesAlarmBinarySensor(HoymilesPlantEntity, BinarySensorEntity):
+class HoymilesAlarmBinarySensor(HoymilesPlantEntity, BinarySensorEntity):  # type: ignore[misc]
     """True iff any online inverter is reporting an alarm."""
 
     entity_description: BinarySensorEntityDescription
@@ -61,7 +61,7 @@ class HoymilesAlarmBinarySensor(HoymilesPlantEntity, BinarySensorEntity):
         return data.alarm_flag
 
 
-class HoymilesLinkBinarySensor(HoymilesInverterEntity, BinarySensorEntity):
+class HoymilesLinkBinarySensor(HoymilesInverterEntity, BinarySensorEntity):  # type: ignore[misc]
     """Per-inverter RF link reachability."""
 
     entity_description: BinarySensorEntityDescription
@@ -84,6 +84,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
+    """Register all binary_sensor entities for this config entry."""
     bundle = hass.data[DOMAIN][entry.entry_id]
     real_coord = bundle["real_data"]
     plant: PlantData = real_coord.data

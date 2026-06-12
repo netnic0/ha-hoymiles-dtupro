@@ -100,11 +100,11 @@ fail_under = 80
 # pymodbus do not ship with bundled stubs — silencing their import errors is
 # the same approach used by HA core itself (see homeassistant/mypy.ini upstream).
 #
-# `misc` and `no-any-return` are also disabled because of the HA-imports-as-Any
-# side effect: every `class HoymilesXxxEntity(SensorEntity)` subclass would
-# otherwise be flagged "cannot subclass value of type Any". This is the
-# tradeoff for the lightweight-strict approach. When HA ships PEP-561-compliant
-# stubs we will re-enable both codes.
+# `import-not-found` and `import-untyped` are disabled globally because the
+# untyped stubs of those upstream packages would otherwise drown the report.
+# Each "Class cannot subclass value of type Any" warning on an HA-base entity
+# is silenced inline with `# type: ignore[misc]` — surgical so that real
+# `misc` regressions in our code stay visible to mypy.
 [tool.mypy]
 python_version = "3.13"
 strict = true
@@ -112,12 +112,7 @@ files = ["custom_components/hoymiles_dtupro"]
 exclude = [
     "tests",                  # tests use AsyncMock, looser typing
 ]
-disable_error_code = [
-    "import-not-found",
-    "import-untyped",
-    "misc",
-    "no-any-return",
-]
+disable_error_code = ["import-not-found", "import-untyped"]
 
 [[tool.mypy.overrides]]
 module = ["homeassistant.*", "voluptuous.*", "pymodbus.*"]

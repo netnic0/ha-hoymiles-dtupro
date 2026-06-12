@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     )
 
 
-class HoymilesPlantEntity(CoordinatorEntity[PlantData]):
+class HoymilesPlantEntity(CoordinatorEntity[PlantData]):  # type: ignore[misc]
     """An entity attached to the DTU device itself (whole plant aggregates)."""
 
     _attr_has_entity_name = True
@@ -45,7 +45,7 @@ class HoymilesPlantEntity(CoordinatorEntity[PlantData]):
         )
 
 
-class HoymilesInverterEntity(CoordinatorEntity[PlantData]):
+class HoymilesInverterEntity(CoordinatorEntity[PlantData]):  # type: ignore[misc]
     """An entity attached to a single inverter, parented to the DTU."""
 
     _attr_has_entity_name = True

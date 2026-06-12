@@ -1,10 +1,14 @@
 # Daily / monthly / yearly energy reporting
 
 The Hoymiles DTU-Pro integration ships **lifetime energy** sensors with
-`state_class: total` (because the DTU resets the lifetime counter at midnight,
-see [`CHANGELOG.md`](../CHANGELOG.md), commit `13b3a13`). To get readable
-**per-day / per-month / per-year** totals, pair them with Home Assistant's
-built-in [`utility_meter`][hac-utility-meter] integration.
+`state_class: total` on the `total_production` entities (the DTU resets its
+lifetime counter at midnight, see [`CHANGELOG.md`](../CHANGELOG.md), commit
+`13b3a13`). The `today_production` entities use `state_class: total_increasing`
+(they monotonically grow within a day).
+
+To get readable **per-day / per-month / per-year** totals, pair these sensors
+with Home Assistant's built-in [`utility_meter`][hac-utility-meter]
+integration. `utility_meter` works with both `state_class` values.
 
 This guide is verified against Home Assistant **2026.x** YAML schema (see
 the official [utility_meter docs][hac-utility-meter] for the full reference).
@@ -131,15 +135,17 @@ Then in *Settings → Dashboards → Energy → Solar production*, point at
 ### `state_class: total` and the DTU midnight reset
 
 Our integration declares `state_class: total` (not `total_increasing`) on
-all `today_production` / `total_production` sensors. Reason: the DTU-Pro
-firmware resets the lifetime counter at midnight, which would trigger
+all `total_production` (lifetime) sensors. Reason: the DTU-Pro firmware
+resets the lifetime counter at midnight, which would trigger
 *"Spike removed"* warnings under `total_increasing` and confuse the HA
-recorder's long-term statistics.
+recorder's long-term statistics. The `today_production` sensors, in
+contrast, use `state_class: total_increasing` — they monotonically grow
+between midnight and the next midnight, then reset cleanly with the day.
 
-`utility_meter` works correctly with both classes. With `total` (our case)
-you do **not** need to set the optional `delta_values: false` (it is the
-default) — `utility_meter` interprets each new value as a cumulative reading,
-exactly what we publish.
+`utility_meter` works correctly with both classes. With `total` (our
+`total_production` case) you do **not** need to set the optional
+`delta_values: false` (it is the default) — `utility_meter` interprets
+each new value as a cumulative reading, exactly what we publish.
 
 ### `periodically_resetting` (default `true`)
 

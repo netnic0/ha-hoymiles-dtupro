@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
-class HoymilesRealDataCoordinator(TimestampDataUpdateCoordinator[PlantData]):
+class HoymilesRealDataCoordinator(TimestampDataUpdateCoordinator[PlantData]):  # type: ignore[misc]
     """Polls live data (PV power, voltages, temperature) at short interval.
 
     Owns the `dtu_unreachable` Repair Issue lifecycle: fired when this
@@ -122,7 +122,7 @@ class HoymilesRealDataCoordinator(TimestampDataUpdateCoordinator[PlantData]):
         )
 
 
-class HoymilesMetadataCoordinator(TimestampDataUpdateCoordinator[PlantData]):
+class HoymilesMetadataCoordinator(TimestampDataUpdateCoordinator[PlantData]):  # type: ignore[misc]
     """Polls slow-changing data (link_status, alarm_count) at long interval.
 
     Owns the `inverter_offline_long` Repair Issue lifecycle: fired (per inverter

@@ -191,12 +191,13 @@ def _validate_backoff_pair(values: dict[str, Any]) -> str | None:
     return None
 
 
-class HoymilesDtuProConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call-arg]
+class HoymilesDtuProConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call-arg, misc]
     """Handle the user-driven config flow.
 
     The `domain=DOMAIN` kwarg is consumed by HA's ConfigFlow.__init_subclass__
     hook; mypy cannot see this through the ignored-imports stub of
-    homeassistant.config_entries, hence the targeted ignore.
+    homeassistant.config_entries. The `[misc]` portion silences the
+    "cannot subclass ConfigFlow (has type Any)" inherent to the same stub.
     """
 
     VERSION = 1
@@ -266,7 +267,7 @@ class HoymilesDtuProConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # typ
         return OptionsFlowHandler()
 
 
-class OptionsFlowHandler(config_entries.OptionsFlow):
+class OptionsFlowHandler(config_entries.OptionsFlow):  # type: ignore[misc]
     """Post-install user-tunable options for the integration (PR #4).
 
     Exposes 8 knobs: 2 scan intervals + 4 client (timeout, retries, backoff) +

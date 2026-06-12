@@ -71,7 +71,7 @@ export so we can confirm and add it to the tested list.
   RF link status.
 - Diagnostics platform included (download a redacted JSON report from the
   device page for bug reports).
-- Polling cadence is configurable; default is 30 s for live data.
+- Polling cadence is configurable; default is 60 s for live data.
 - Built-in firmware data-size workaround (`apply_data_size_fix`) for known
   Hoymiles DTU firmware quirks.
 
@@ -132,7 +132,7 @@ No YAML required.
 | Host / IP | — | The DTU's local IP, e.g. `192.0.2.1` |
 | Port | `502` | Modbus TCP port |
 | Unit ID | `1` | Modbus slave ID; rarely needs to change |
-| Live data scan interval | `30 s` | Minimum 10 s to avoid stressing the DTU |
+| Live data scan interval | `60 s` | Minimum 10 s to avoid stressing the DTU |
 
 Reconfiguring (host changed, scan interval tuning) is done via the
 *"Configure"* button on the integration card — entities are preserved.

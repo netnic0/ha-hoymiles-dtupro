@@ -161,7 +161,7 @@ PORT_SENSORS: tuple[SensorEntityDescription, ...] = (
 )
 
 
-class HoymilesPlantSensor(HoymilesPlantEntity, SensorEntity):
+class HoymilesPlantSensor(HoymilesPlantEntity, SensorEntity):  # type: ignore[misc]
     """A plant-level numeric sensor aggregated across all online inverters."""
 
     entity_description: SensorEntityDescription
@@ -180,7 +180,7 @@ class HoymilesPlantSensor(HoymilesPlantEntity, SensorEntity):
         return getattr(data, self.entity_description.key, None)
 
 
-class HoymilesInverterSensor(HoymilesInverterEntity, SensorEntity):
+class HoymilesInverterSensor(HoymilesInverterEntity, SensorEntity):  # type: ignore[misc]
     """A per-inverter sensor for port-agnostic fields (temperature, grid, alarms).
 
     Reads from port_number == 1 since those fields are identical across ports.
@@ -210,7 +210,7 @@ class HoymilesInverterSensor(HoymilesInverterEntity, SensorEntity):
         return None
 
 
-class HoymilesInverterPortSensor(HoymilesInverterEntity, SensorEntity):
+class HoymilesInverterPortSensor(HoymilesInverterEntity, SensorEntity):  # type: ignore[misc]
     """A per-MPPT-port sensor for PV-side measurements.
 
     HMS-1000-2T has 2 MPPT inputs; unique_id includes the port number so HA
