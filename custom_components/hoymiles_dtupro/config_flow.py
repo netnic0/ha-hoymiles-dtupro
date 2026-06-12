@@ -191,8 +191,13 @@ def _validate_backoff_pair(values: dict[str, Any]) -> str | None:
     return None
 
 
-class HoymilesDtuProConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle the user-driven config flow."""
+class HoymilesDtuProConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call-arg]
+    """Handle the user-driven config flow.
+
+    The `domain=DOMAIN` kwarg is consumed by HA's ConfigFlow.__init_subclass__
+    hook; mypy cannot see this through the ignored-imports stub of
+    homeassistant.config_entries, hence the targeted ignore.
+    """
 
     VERSION = 1
     MINOR_VERSION = 2

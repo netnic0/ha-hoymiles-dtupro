@@ -94,14 +94,34 @@ exclude_lines = [
 ]
 fail_under = 80
 
-# ─── Mypy (M0-I3: api package only for M0; expand in M2 with pytest-homeassistant) ────
+# ─── Mypy ─────────────────────────────────────────────────────────────────────
+# Scoped to the full HA layer (PR #5b) so we surface annotation drift in the
+# integration glue, not just the pure-api package. HA core, voluptuous and
+# pymodbus do not ship with bundled stubs — silencing their import errors is
+# the same approach used by HA core itself (see homeassistant/mypy.ini upstream).
+#
+# `misc` and `no-any-return` are also disabled because of the HA-imports-as-Any
+# side effect: every `class HoymilesXxxEntity(SensorEntity)` subclass would
+# otherwise be flagged "cannot subclass value of type Any". This is the
+# tradeoff for the lightweight-strict approach. When HA ships PEP-561-compliant
+# stubs we will re-enable both codes.
 [tool.mypy]
 python_version = "3.13"
 strict = true
-files = ["custom_components/hoymiles_dtupro/api"]
+files = ["custom_components/hoymiles_dtupro"]
 exclude = [
     "tests",                  # tests use AsyncMock, looser typing
 ]
+disable_error_code = [
+    "import-not-found",
+    "import-untyped",
+    "misc",
+    "no-any-return",
+]
+
+[[tool.mypy.overrides]]
+module = ["homeassistant.*", "voluptuous.*", "pymodbus.*"]
+ignore_missing_imports = true
 
 # ─── Ruff ─────────────────────────────────────────────────────────────────────
 [tool.ruff]
