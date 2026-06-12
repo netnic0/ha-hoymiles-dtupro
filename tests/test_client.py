@@ -14,6 +14,7 @@ from custom_components.hoymiles_dtupro.api.client import HoymilesAsyncClient
 from custom_components.hoymiles_dtupro.api.exceptions import (
     HoymilesConnectionError,
     HoymilesProtocolError,
+    HoymilesTimeoutError,
 )
 from tests.conftest import make_error_response, make_modbus_response
 from tests.fixtures.inverter_samples import (
@@ -138,3 +139,146 @@ async def test_close_does_not_raise_even_if_underlying_close_fails(
         serial = await client.async_get_dtu_serial()
 
     assert serial == "AABBCCDDEEFF"
+
+
+# ─── Retry / backoff (PR #3) ───────────────────────────────────────────────
+
+
+def test_constructor_rejects_invalid_retry_attempts() -> None:
+    with pytest.raises(ValueError, match="retry_attempts"):
+        HoymilesAsyncClient(host="192.0.2.10", retry_attempts=0)
+
+
+def test_constructor_rejects_inverted_backoff() -> None:
+    with pytest.raises(ValueError, match="backoff"):
+        HoymilesAsyncClient(
+            host="192.0.2.10",
+            backoff_initial_s=2.0,
+            backoff_max_s=1.0,
+        )
+
+
+def _plant_data_success_sequence():
+    """Sequence of mocked Modbus responses for one successful plant fetch."""
+    return [
+        make_modbus_response(dtu_serial_payload()),
+        *(make_modbus_response(p) for p in SEVEN_HMS_INVERTERS),
+        make_modbus_response(build_null_inverter_payload()),
+    ]
+
+
+async def test_async_get_plant_data_retries_on_connection_error(
+    fake_pymodbus_client,
+) -> None:
+    """A transient ConnectionError on the first attempt is retried successfully."""
+    success = _plant_data_success_sequence()
+    fake_pymodbus_client.read_holding_registers.side_effect = [
+        ConnectionError("reset"),
+        *success,
+    ]
+
+    with _patch_pymodbus(fake_pymodbus_client):
+        client = HoymilesAsyncClient(
+            host="192.0.2.10",
+            backoff_initial_s=0.0,  # speed up the test
+            backoff_max_s=0.0,
+        )
+        plant = await client.async_get_plant_data()
+
+    assert plant.dtu_serial == "AABBCCDDEEFF"
+    assert plant.inverter_count == 7
+    # 1 failed read + 9 successful reads on the retry attempt = 10 total.
+    assert fake_pymodbus_client.read_holding_registers.await_count == 1 + len(success)
+    # Two attempts → two TCP connections opened.
+    assert fake_pymodbus_client.connect.await_count == 2
+
+
+async def test_async_get_plant_data_retries_on_timeout(fake_pymodbus_client) -> None:
+    """A TimeoutError on the first attempt is retried successfully."""
+    success = _plant_data_success_sequence()
+    fake_pymodbus_client.read_holding_registers.side_effect = [
+        TimeoutError("slow DTU"),
+        *success,
+    ]
+
+    with _patch_pymodbus(fake_pymodbus_client):
+        client = HoymilesAsyncClient(
+            host="192.0.2.10",
+            backoff_initial_s=0.0,
+            backoff_max_s=0.0,
+        )
+        plant = await client.async_get_plant_data()
+
+    assert plant.dtu_serial == "AABBCCDDEEFF"
+    assert plant.inverter_count == 7
+    assert fake_pymodbus_client.read_holding_registers.await_count == 1 + len(success)
+    assert fake_pymodbus_client.connect.await_count == 2
+
+
+async def test_async_get_plant_data_does_not_retry_protocol_error(
+    fake_pymodbus_client,
+) -> None:
+    """Deterministic Modbus error responses must NOT be retried."""
+    fake_pymodbus_client.read_holding_registers.return_value = make_error_response()
+
+    with _patch_pymodbus(fake_pymodbus_client):
+        client = HoymilesAsyncClient(
+            host="192.0.2.10",
+            retry_attempts=3,
+            backoff_initial_s=0.0,
+            backoff_max_s=0.0,
+        )
+        with pytest.raises(HoymilesProtocolError, match="Modbus error"):
+            await client.async_get_plant_data()
+
+    # No retry: a single read call, a single connect call.
+    assert fake_pymodbus_client.read_holding_registers.await_count == 1
+    assert fake_pymodbus_client.connect.await_count == 1
+
+
+async def test_async_get_plant_data_gives_up_after_max_attempts(
+    fake_pymodbus_client,
+) -> None:
+    """After `retry_attempts` consecutive failures, the last error propagates."""
+    fake_pymodbus_client.read_holding_registers.side_effect = [
+        ConnectionError("reset 1"),
+        ConnectionError("reset 2"),
+        ConnectionError("reset 3"),
+    ]
+
+    with _patch_pymodbus(fake_pymodbus_client):
+        client = HoymilesAsyncClient(
+            host="192.0.2.10",
+            retry_attempts=3,
+            backoff_initial_s=0.0,
+            backoff_max_s=0.0,
+        )
+        with pytest.raises(HoymilesConnectionError):
+            await client.async_get_plant_data()
+
+    # Critical assertion (validates Option A vs B):
+    # a fresh TCP socket is opened on every attempt, not reused.
+    assert fake_pymodbus_client.connect.await_count == 3
+    assert fake_pymodbus_client.read_holding_registers.await_count == 3
+
+
+async def test_async_get_plant_data_propagates_timeout_after_exhaustion(
+    fake_pymodbus_client,
+) -> None:
+    """Exhaustion of retries on a timeout chain raises HoymilesTimeoutError."""
+    fake_pymodbus_client.read_holding_registers.side_effect = [
+        TimeoutError("t1"),
+        TimeoutError("t2"),
+    ]
+
+    with _patch_pymodbus(fake_pymodbus_client):
+        client = HoymilesAsyncClient(
+            host="192.0.2.10",
+            retry_attempts=2,
+            backoff_initial_s=0.0,
+            backoff_max_s=0.0,
+        )
+        with pytest.raises(HoymilesTimeoutError):
+            await client.async_get_plant_data()
+
+    assert fake_pymodbus_client.connect.await_count == 2
