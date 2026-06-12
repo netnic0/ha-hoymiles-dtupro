@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.7.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.6.1...v1.7.0) (2026-06-12)
+
+
+### Features
+
+* **i18n:** add data_description to the reconfigure step ([46654cc](https://github.com/netnic0/ha-hoymiles-dtupro/commit/46654cc79a52bfbd441eb1cd8f7eb335f18a84de))
+
+
+### Bug Fixes
+
+* address senior code review of PR [#5](https://github.com/netnic0/ha-hoymiles-dtupro/issues/5)b ([cf9fd6f](https://github.com/netnic0/ha-hoymiles-dtupro/commit/cf9fd6f19168ae32171aa4e211a48222254d10bd))
+* **types:** align HA layer with real HA stubs (CI-revealed bugs) ([fb24563](https://github.com/netnic0/ha-hoymiles-dtupro/commit/fb24563c815dcb05f73abb4b9cec4caaa5d17f5b))
+
+
+### Documentation
+
+* **changelog:** refresh [Unreleased] block for PR [#5](https://github.com/netnic0/ha-hoymiles-dtupro/issues/5)b ([f002ef4](https://github.com/netnic0/ha-hoymiles-dtupro/commit/f002ef4de2294dac29d4c531695b309ff5e472a3))
+* **readme:** add 'Compatible devices' section + utility_meter pointer ([03f9c5a](https://github.com/netnic0/ha-hoymiles-dtupro/commit/03f9c5ad7a72772d55d660224d4c7bca1537e122))
+* **utility_meter:** add daily/monthly/yearly energy reporting guide ([2932c8f](https://github.com/netnic0/ha-hoymiles-dtupro/commit/2932c8faf130f2645bc6c39d9d16d233d1ae63b4))
+
 ## [1.6.1](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.6.0...v1.6.1) (2026-06-12)
 
 
