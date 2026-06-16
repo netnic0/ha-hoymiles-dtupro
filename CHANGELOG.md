@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.9.1](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.9.0...v1.9.1) (2026-06-16)
+
+
+### Bug Fixes
+
+* **models:** deduplicate total_production by serial to fix ×4-5 overcounting ([3f3c114](https://github.com/netnic0/ha-hoymiles-dtupro/commit/3f3c114d94c9a2cd2cdc9f15b98266cef0a863ec))
+* **models:** deduplicate total_production to fix ×4-5 overcounting (Bug A) ([4979317](https://github.com/netnic0/ha-hoymiles-dtupro/commit/4979317e9ffc256f767459ead49868b71abfc88d))
+
 ## [1.9.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.8.0...v1.9.0) (2026-06-12)
 
 
