@@ -156,8 +156,22 @@ class PlantData:
 
     @property
     def total_production(self) -> int:
-        """Sum of lifetime production for online inverters, in watt-hours."""
-        return sum(inv.total_production for inv in self.online_inverters)
+        """Sum of lifetime production across all online inverters, in watt-hours.
+
+        Deduplicates by serial_number because the DTU replicates the whole-inverter
+        lifetime counter (total_wh, uint32) on every MPPT port of the same inverter.
+        Summing all port readings would multiply-count by the number of ports.
+
+        Note: today_production does NOT need deduplication — today_wh (uint16) is a
+        genuine per-port measurement independently tracked by each MPPT input.
+        """
+        seen: set[str] = set()
+        total = 0
+        for inv in self.online_inverters:
+            if inv.serial_number not in seen:
+                seen.add(inv.serial_number)
+                total += inv.total_production
+        return total
 
     @property
     def alarm_flag(self) -> bool:
