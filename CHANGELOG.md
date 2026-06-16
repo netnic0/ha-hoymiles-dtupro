@@ -25,6 +25,24 @@ from [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+### Fixed
+- `total_production` plant-level sensor reported roughly ×4–5 the real lifetime
+  value (e.g. ~10 MWh instead of ~2.21 MWh). Root cause: the DTU replicates the
+  whole-inverter lifetime counter (`total_wh`, uint32) on every MPPT port reading.
+  For a 7-inverter HMS-1000-2T installation (2 ports each = 14 Modbus records),
+  summing all records counted each inverter twice. Fixed by deduplicating on
+  `serial_number` before summing.
+
+  **Migration note:** after upgrading, the `total_production` entity will drop to
+  its correct value (approximately your Hoymiles app figure). Home Assistant's
+  Statistics recorder will show a large decrease in the history graph. To fix the
+  historical data: go to **Developer Tools → Statistics**, find
+  `sensor.*_production_totale`, click **Fix issues** (or **Clear statistics**).
+  This is a one-time action — all future values will be correct automatically.
+
+  This fix also unblocks the `co2_savings_lifetime` and
+  `equivalent_trees_planted_lifetime` sensors planned for the next release.
+
 ### Added
 - Two new plant-level sensors estimating environmental impact (PR #6c):
   - `co2_savings_today` (kg) — daily CO2 emissions avoided.

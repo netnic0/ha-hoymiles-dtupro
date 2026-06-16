@@ -144,3 +144,67 @@ class TestPlantData:
         )
         plant = PlantData(dtu_serial="AABBCCDDEEFF", inverters=(offline_alarming,))
         assert plant.alarm_flag is False
+
+    def test_total_production_deduplicates_by_serial_dual_port(self) -> None:
+        """total_production counts each physical inverter once, not once per port.
+
+        HMS-1000-2T has 2 MPPT ports; the DTU replicates the whole-inverter
+        lifetime counter on both port readings. Summing without dedup would give x2.
+        """
+        serial = "1144000000A1"
+        port1 = _make_reading(serial_number=serial, port_number=1, total_production=100_000)
+        port2 = _make_reading(serial_number=serial, port_number=2, total_production=100_000)
+        plant = PlantData(dtu_serial="AABBCCDDEEFF", inverters=(port1, port2))
+        assert plant.total_production == 100_000  # NOT 200_000
+
+    def test_total_production_sums_distinct_inverters(self) -> None:
+        """When multiple physical inverters are online, their totals are summed."""
+        inv_a = _make_reading(serial_number="1144000000A1", port_number=1, total_production=100_000)
+        inv_b = _make_reading(serial_number="1144000000A2", port_number=1, total_production=200_000)
+        plant = PlantData(dtu_serial="AABBCCDDEEFF", inverters=(inv_a, inv_b))
+        assert plant.total_production == 300_000
+
+    def test_total_production_seven_inverters_two_ports(self) -> None:
+        """Regression: 7 HMS-1000-2T inverters x 2 ports should sum 7 x 985_000."""
+        serials = [f"114400000{n:03X}" for n in range(0xA1, 0xA8)]
+        readings = []
+        for sn in serials:
+            readings.append(
+                _make_reading(serial_number=sn, port_number=1, total_production=985_000)
+            )
+            readings.append(
+                _make_reading(serial_number=sn, port_number=2, total_production=985_000)
+            )
+        plant = PlantData(dtu_serial="AABBCCDDEEFF", inverters=tuple(readings))
+        assert plant.total_production == 7 * 985_000  # 6_895_000 Wh, NOT 14 * 985_000
+
+    def test_today_production_sums_all_ports(self) -> None:
+        """today_production sums all ports — today_wh is genuinely per-port (not replicated)."""
+        serial = "1144000000A1"
+        port1 = _make_reading(serial_number=serial, port_number=1, today_production=1_000)
+        port2 = _make_reading(serial_number=serial, port_number=2, today_production=850)
+        plant = PlantData(dtu_serial="AABBCCDDEEFF", inverters=(port1, port2))
+        assert plant.today_production == 1_850  # sum of both ports
+
+    def test_total_production_excludes_offline_inverter(self) -> None:
+        """An offline inverter (link_status=False) must not contribute to total."""
+        online = _make_reading(
+            serial_number="1144000000A1", port_number=1, total_production=100_000
+        )
+        offline = _make_reading(
+            serial_number="1144000000A2", port_number=1, total_production=999_999, link_status=False
+        )
+        plant = PlantData(dtu_serial="AABBCCDDEEFF", inverters=(online, offline))
+        assert plant.total_production == 100_000
+
+    def test_total_production_port1_offline_port2_online(self) -> None:
+        """If port 1 is offline but port 2 is online, the inverter total is still counted."""
+        serial = "1144000000A1"
+        port1_off = _make_reading(
+            serial_number=serial, port_number=1, total_production=100_000, link_status=False
+        )
+        port2_on = _make_reading(
+            serial_number=serial, port_number=2, total_production=100_000, link_status=True
+        )
+        plant = PlantData(dtu_serial="AABBCCDDEEFF", inverters=(port1_off, port2_on))
+        assert plant.total_production == 100_000
