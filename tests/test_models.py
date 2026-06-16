@@ -149,7 +149,7 @@ class TestPlantData:
         """total_production counts each physical inverter once, not once per port.
 
         HMS-1000-2T has 2 MPPT ports; the DTU replicates the whole-inverter
-        lifetime counter on both port readings. Summing without dedup would give ×2.
+        lifetime counter on both port readings. Summing without dedup would give x2.
         """
         serial = "1144000000A1"
         port1 = _make_reading(serial_number=serial, port_number=1, total_production=100_000)
@@ -165,7 +165,7 @@ class TestPlantData:
         assert plant.total_production == 300_000
 
     def test_total_production_seven_inverters_two_ports(self) -> None:
-        """Regression: 7 HMS-1000-2T inverters × 2 ports should sum 7 × 985_000."""
+        """Regression: 7 HMS-1000-2T inverters x 2 ports should sum 7 x 985_000."""
         serials = [f"114400000{n:03X}" for n in range(0xA1, 0xA8)]
         readings = []
         for sn in serials:
