@@ -169,8 +169,12 @@ class TestPlantData:
         serials = [f"114400000{n:03X}" for n in range(0xA1, 0xA8)]
         readings = []
         for sn in serials:
-            readings.append(_make_reading(serial_number=sn, port_number=1, total_production=985_000))
-            readings.append(_make_reading(serial_number=sn, port_number=2, total_production=985_000))
+            readings.append(
+                _make_reading(serial_number=sn, port_number=1, total_production=985_000)
+            )
+            readings.append(
+                _make_reading(serial_number=sn, port_number=2, total_production=985_000)
+            )
         plant = PlantData(dtu_serial="AABBCCDDEEFF", inverters=tuple(readings))
         assert plant.total_production == 7 * 985_000  # 6_895_000 Wh, NOT 14 * 985_000
 
@@ -184,7 +188,9 @@ class TestPlantData:
 
     def test_total_production_excludes_offline_inverter(self) -> None:
         """An offline inverter (link_status=False) must not contribute to total."""
-        online = _make_reading(serial_number="1144000000A1", port_number=1, total_production=100_000)
+        online = _make_reading(
+            serial_number="1144000000A1", port_number=1, total_production=100_000
+        )
         offline = _make_reading(
             serial_number="1144000000A2", port_number=1, total_production=999_999, link_status=False
         )
