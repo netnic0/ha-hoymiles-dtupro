@@ -138,9 +138,11 @@ No YAML required.
 Reconfiguring (host changed, scan interval tuning) is done via the
 *"Configure"* button on the integration card — entities are preserved.
 
-> 📘 **Energy reporting**: for daily / monthly / yearly totals on the HA Energy
-> dashboard, see the dedicated guide
-> [`docs/utility_meter.md`](docs/utility_meter.md).
+> 📘 **Energy dashboard setup**: use `sensor.<dtu>_today_production` (state_class
+> `total_increasing`) as the **Solar production** source in the HA Energy
+> dashboard. See [Energy dashboard — which entity to use](#energy-dashboard--which-entity-to-use)
+> below for the full explanation, and [`docs/utility_meter.md`](docs/utility_meter.md)
+> for daily / monthly / yearly utility meter recipes.
 
 ---
 
@@ -180,6 +182,52 @@ The table below uses the **English** translation key names (locale `en`).
 > **Note:** If your HA is configured in French, the entity slugs will use the
 > French translation keys (e.g. `puissance_instantanee`, `energie_du_jour`, `liaison`).
 > The translation key names are defined in `translations/en.json`.
+
+---
+
+## Energy dashboard — which entity to use
+
+The plant device exposes **two** energy-class sensors that look interchangeable
+but serve different purposes. Pick the right one or the HA Energy dashboard
+will display misleading totals.
+
+| Use case | Entity | `state_class` | Notes |
+|---|---|---|---|
+| **HA Energy dashboard → Solar production** | `sensor.<dtu>_today_production` | `total_increasing` | ✅ Designed for this. Resets at midnight via HA's standard meter-cycle logic. |
+| Lovelace cards showing lifetime production | `sensor.<dtu>_total_production` | `total` | ⚠️ The DTU resets this register at midnight too (firmware quirk), so HA stores it with `state_class: total` to keep recorder warnings away. **Do not** add it to the Energy dashboard. |
+
+### Why not `total_production` in the Energy dashboard?
+
+The Energy dashboard *does* accept `state_class: total` sources, so HA will
+let you pick `total_production` — but the DTU's midnight reset will be
+interpreted as a "meter replacement" by HA's long-term statistics engine, and
+the delta of the last few minutes before midnight is lost from the daily sum.
+Over months this drifts.
+
+`today_production` was added precisely to feed the Energy dashboard with a
+clean `total_increasing` series. Use it.
+
+### Do not force `state_class: total_increasing` on `total_production`
+
+A common workaround on community forums is to override `total_production`'s
+state class via `customize.yaml`:
+
+```yaml
+# DON'T DO THIS
+sensor.<dtu>_total_production:
+  state_class: total_increasing
+```
+
+This re-introduces the very HA recorder warnings the integration's
+`state_class: total` choice was meant to silence (see commit
+[`13b3a13`](https://github.com/netnic0/ha-hoymiles-dtupro/commit/13b3a13)),
+and corrupts long-term statistics every night.
+
+### For utility meters
+
+If you want extra `utility_meter` sensors on top of the Energy dashboard,
+use `today_production` (or a Riemann sum of `pv_power`) as the source — not
+`total_production`. Full recipes in [`docs/utility_meter.md`](docs/utility_meter.md).
 
 ---
 
