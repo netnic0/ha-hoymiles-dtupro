@@ -85,11 +85,26 @@ class HoymilesRealDataCoordinator(TimestampDataUpdateCoordinator[PlantData]):
         self._entry_id = entry_id
         self._host = host
         self._dtu_unreachable_threshold = dtu_unreachable_threshold
+        # RF-flap-resilient cache for plant-level today_production. Fed on every
+        # successful poll; read by HoymilesPlantSensor (today_production key) and
+        # by HoymilesEnvironmentalSensor (CO2 / equivalent-trees-today derived
+        # values). See `TodayCache` for the contract.
+        self._today_cache = TodayCache()
 
     @property
     def issue_id(self) -> str:
         """Stable Repair Issue ID, scoped per config entry."""
         return f"{ISSUE_ID_DTU_UNREACHABLE}_{self._entry_id}"
+
+    @property
+    def plant_today_production_clamped(self) -> int | None:
+        """Monotone, glitch-resistant plant `today_production` in watt-hours.
+
+        Returns the last value fed to the cache (None until the first successful
+        poll). Sensors should read this property instead of `data.today_production`
+        to avoid surfacing RF-flap-induced drops to HA's recorder.
+        """
+        return self._today_cache.value
 
     async def _async_update_data(self) -> PlantData:
         try:
@@ -97,6 +112,11 @@ class HoymilesRealDataCoordinator(TimestampDataUpdateCoordinator[PlantData]):
         except HoymilesError as err:
             self._maybe_raise_dtu_unreachable_issue()
             raise UpdateFailed(f"Hoymiles real-data fetch failed: {err}") from err
+
+        # Feed the cache from the raw plant sum BEFORE clearing the dtu_unreachable
+        # issue — the order is not semantically meaningful, but doing it first
+        # keeps the data-side effects together and the HA-side effects together.
+        self._today_cache.update(data.today_production)
 
         # Successful poll → clear any pending dtu_unreachable issue.
         ir.async_delete_issue(self.hass, DOMAIN, self.issue_id)
