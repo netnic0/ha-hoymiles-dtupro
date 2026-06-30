@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.10.0](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.9.4...v1.10.0) (2026-06-30)
+
+
+### Features
+
+* lifetime CO2 + equivalent-trees sensors + README refresh (PR [#6](https://github.com/netnic0/ha-hoymiles-dtupro/issues/6)d) ([#35](https://github.com/netnic0/ha-hoymiles-dtupro/issues/35)) ([f5ebdb3](https://github.com/netnic0/ha-hoymiles-dtupro/commit/f5ebdb328444593366ef42cf7519bc82d276908a))
+
 ## [1.9.4](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.9.3...v1.9.4) (2026-06-30)
 
 
