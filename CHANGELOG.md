@@ -54,6 +54,25 @@ from [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## [Unreleased]
 
+### Added
+- Two new plant-level sensors estimating cumulative environmental impact
+  (PR #6d), symmetric to the `today` variants shipped in v1.9.0:
+  - `co2_savings_lifetime` (kg) — total CO2 emissions avoided since
+    installation; `state_class: total` (the underlying `total_production`
+    register is itself reset at midnight by the DTU firmware, so the same
+    state class is correct here too).
+  - `equivalent_trees_planted_lifetime` (fractional count) — lifetime
+    equivalent young trees planted.
+  Both reuse the existing `co2_factor_kg_per_kwh` and `tree_kg_co2_per_year`
+  OptionsFlow knobs — no new configuration is introduced. Derived from
+  `PlantData.total_production`, which is dedup'd by serial since v1.9.1.
+
+### Changed
+- README refresh: roadmap updated through v1.9.4; entity table now lists the
+  4 environmental sensors (2 today + 2 lifetime); validated entity count
+  118 → 120; Energy dashboard section notes the v1.9.4 RF-flap clamp and
+  acknowledges that users with a Riemann-sum workaround can remove it.
+
 ### Fixed
 - `today_production` plant-level sensor and the derived `co2_savings_today` /
   `equivalent_trees_planted_today` sensors were drifting upward by an order of
