@@ -34,6 +34,29 @@ from [Conventional Commits](https://www.conventionalcommits.org/).
 ## [Unreleased]
 
 ### Fixed
+- `today_production` plant-level sensor and the derived `co2_savings_today` /
+  `equivalent_trees_planted_today` sensors were drifting upward by an order of
+  magnitude (×10–20) over the course of a day, inflating the Home Assistant
+  Energy dashboard's daily figures (e.g. 350–600 kWh shown vs ~30 kWh real).
+  Root cause: when an inverter's RF link flaps for a single poll cycle it is
+  temporarily excluded from `online_inverters`, the plant sum drops, and
+  recovers on the next cycle. With sub-minute polling on a 7-inverter plant
+  this can fire 30–50× per day. Each drop on a `state_class=TOTAL_INCREASING`
+  sensor is interpreted by Home Assistant's recorder as a counter reset,
+  crediting the pre-drop delta to the cumulative — snowballing all day.
+
+  Fixed by a new in-memory `TodayCache` in the coordinator: the plant
+  `today_production` exposed to sensors is now monotone within the local day,
+  resets cleanly at midnight (`dt_util.now().date()`, DST-safe), and rejects
+  implausible single-poll jumps above 1 kWh as glitches. The DTU's own daily
+  counter remains the source of truth on every restart — no persistence
+  needed. The CO2 and trees-today sensors derive from this clamped value, so
+  they no longer drift either.
+
+  **Migration note:** users who had inflated readings will see today's
+  cumulative value "slow down" or briefly plateau when the fix takes effect.
+  Past statistics are unchanged; future progression is now correct.
+
 - `total_production` plant-level sensor reported roughly ×4–5 the real lifetime
   value (e.g. ~10 MWh instead of ~2.21 MWh). Root cause: the DTU replicates the
   whole-inverter lifetime counter (`total_wh`, uint32) on every MPPT port reading.
