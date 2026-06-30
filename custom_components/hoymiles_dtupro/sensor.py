@@ -201,6 +201,12 @@ PORT_SENSORS: tuple[SensorEntityDescription, ...] = (
 class HoymilesPlantSensor(HoymilesPlantEntity, SensorEntity):
     """A plant-level numeric sensor aggregated across all online inverters."""
 
+    # Narrow `coordinator` from the base class's RealData|Metadata union to the
+    # real-data coordinator only — these sensors are always instantiated with
+    # the real-data coordinator (see `async_setup_entry`). This is a pure type
+    # annotation; no runtime cost. Required for mypy to resolve the
+    # `plant_today_production_clamped` access on this coordinator subtype.
+    coordinator: HoymilesRealDataCoordinator
     entity_description: SensorEntityDescription
 
     def __init__(
@@ -240,6 +246,8 @@ class HoymilesEnvironmentalSensor(HoymilesPlantEntity, SensorEntity):
     once Bug A is resolved.
     """
 
+    # Same coordinator-type narrowing as `HoymilesPlantSensor` (PR #7).
+    coordinator: HoymilesRealDataCoordinator
     entity_description: SensorEntityDescription
 
     def __init__(
