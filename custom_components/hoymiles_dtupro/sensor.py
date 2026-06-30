@@ -278,8 +278,11 @@ class HoymilesEnvironmentalSensor(HoymilesPlantEntity, SensorEntity):
         # to `data.today_production` would re-introduce the drops the cache
         # exists to suppress (CO2 and trees-today are TOTAL_INCREASING and feed
         # the Energy dashboard's daily figures through utility_meter cycles).
+        # The clamp returns `None` before the first poll and `int >= 0` after;
+        # `TodayCache.update` rejects negative inputs with ValueError, so a
+        # negative value here is impossible by construction — no `< 0` guard.
         today_wh = self.coordinator.plant_today_production_clamped
-        if today_wh is None or today_wh < 0:
+        if today_wh is None:
             return None
         today_kwh = today_wh / 1000.0
         co2_factor, tree_factor = self._factors()
