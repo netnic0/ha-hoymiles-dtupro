@@ -89,7 +89,9 @@
       "alarm_code": { "name": "Code d'alarme" },
       "alarm_count": { "name": "Nombre d'alarmes" },
       "co2_savings_today": { "name": "Économies CO2 du jour" },
-      "equivalent_trees_planted_today": { "name": "Équivalent jeunes arbres plantés du jour" }
+      "equivalent_trees_planted_today": { "name": "Équivalent jeunes arbres plantés du jour" },
+      "co2_savings_lifetime": { "name": "Économies CO2 (cumul)" },
+      "equivalent_trees_planted_lifetime": { "name": "Équivalent jeunes arbres plantés (cumul)" }
     },
     "binary_sensor": {
       "alarm": { "name": "Alarme" },

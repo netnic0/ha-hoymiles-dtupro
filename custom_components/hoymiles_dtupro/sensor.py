@@ -3,7 +3,8 @@
 Entities created:
   * Plant-level (attached to the DTU device):
       pv_power, today_production, total_production,
-      co2_savings_today, equivalent_trees_planted_today (PR #6c)
+      co2_savings_today, equivalent_trees_planted_today (PR #6c),
+      co2_savings_lifetime, equivalent_trees_planted_lifetime (PR #6d)
 
   * Per-inverter (one set per detected inverter, port-agnostic):
       temperature, grid_voltage, grid_frequency, alarm_code, alarm_count
@@ -12,7 +13,7 @@ Entities created:
       pv_voltage, pv_current, pv_power, today_production, total_production
 
 Full entity count for 7 HMS-1000-2T inverters with 2 ports each:
-  5 (plant) + 7*5 (inverter) + 7*2*5 (port) = 5 + 35 + 70 = 110 sensors.
+  7 (plant) + 7*5 (inverter) + 7*2*5 (port) = 7 + 35 + 70 = 112 sensors.
 """
 
 from __future__ import annotations
@@ -114,6 +115,30 @@ PLANT_ENVIRONMENTAL_SENSORS: tuple[SensorEntityDescription, ...] = (
         state_class=SensorStateClass.TOTAL_INCREASING,
         # No native_unit_of_measurement: pure count, but a fractional float so the
         # value is always informative even on low-production days (winter ≈ 0.05).
+        icon="mdi:tree-outline",
+        suggested_display_precision=2,
+    ),
+    # ── Lifetime variants (PR #6d) ─────────────────────────────────────────────
+    # Symmetric to the today variants above, but derived from
+    # `PlantData.total_production` (Wh, dedup'd by serial since v1.9.1) instead
+    # of the RF-flap-clamped today value. state_class=TOTAL — NOT TOTAL_INCREASING —
+    # because the underlying `total_production` is also TOTAL: the DTU resets the
+    # lifetime register at midnight (firmware quirk), and TOTAL handles those
+    # resets without HA recorder warnings (see PLANT_SENSORS comment above).
+    SensorEntityDescription(
+        key="co2_savings_lifetime",
+        translation_key="co2_savings_lifetime",
+        device_class=SensorDeviceClass.WEIGHT,
+        state_class=SensorStateClass.TOTAL,
+        native_unit_of_measurement=UnitOfMass.KILOGRAMS,
+        icon="mdi:molecule-co2",
+        suggested_display_precision=1,
+    ),
+    SensorEntityDescription(
+        key="equivalent_trees_planted_lifetime",
+        translation_key="equivalent_trees_planted_lifetime",
+        # Same shape as the today variant — no device_class, no unit, fractional count.
+        state_class=SensorStateClass.TOTAL,
         icon="mdi:tree-outline",
         suggested_display_precision=2,
     ),
@@ -241,9 +266,11 @@ class HoymilesEnvironmentalSensor(HoymilesPlantEntity, SensorEntity):
     `api/` sub-package free of HA configuration knowledge: business logic
     lives in the HA layer.
 
-    This class is forward-compatible with PR #6d (lifetime variants): a future
-    subclass could swap `today_production` for a fixed `total_production`
-    once Bug A is resolved.
+    Handles four keys:
+      * co2_savings_today / equivalent_trees_planted_today (PR #6c) — derived
+        from the RF-flap-clamped plant `today_production`.
+      * co2_savings_lifetime / equivalent_trees_planted_lifetime (PR #6d) —
+        derived from `PlantData.total_production` (dedup'd by serial since v1.9.1).
     """
 
     # Same coordinator-type narrowing as `HoymilesPlantSensor` (PR #7).
@@ -274,9 +301,32 @@ class HoymilesEnvironmentalSensor(HoymilesPlantEntity, SensorEntity):
     @property
     def native_value(self) -> float | None:
         """Compute the sensor value from `today_production` and the factors."""
-        # Read the RF-flap-clamped plant value via the coordinator. Falling back
-        # to `data.today_production` would re-introduce the drops the cache
-        # exists to suppress (CO2 and trees-today are TOTAL_INCREASING and feed
+        co2_factor, tree_factor = self._factors()
+
+        # Lifetime variants (PR #6d) — derive from PlantData.total_production
+        # (Wh, dedup'd by serial since v1.9.1). Read coordinator.data directly
+        # since these are NOT TOTAL_INCREASING and do not need the RF-flap clamp:
+        # state_class=TOTAL tolerates the DTU's midnight lifetime-register reset.
+        if self.entity_description.key in (
+            "co2_savings_lifetime",
+            "equivalent_trees_planted_lifetime",
+        ):
+            data = self.coordinator.data
+            if data is None:
+                return None
+            total_kwh = data.total_production / 1000.0
+            if self.entity_description.key == "co2_savings_lifetime":
+                # kg CO2 saved (cumulative) = kWh_total * (kg CO2 / kWh)
+                return round(total_kwh * co2_factor, 2)
+            # equivalent_trees_planted_lifetime
+            if tree_factor <= 0:
+                return None
+            kg_total = total_kwh * co2_factor
+            return round(kg_total / tree_factor, 2)
+
+        # Today variants — read the RF-flap-clamped plant value via the coordinator.
+        # Falling back to `data.today_production` would re-introduce the drops the
+        # cache exists to suppress (CO2 and trees-today are TOTAL_INCREASING and feed
         # the Energy dashboard's daily figures through utility_meter cycles).
         # The clamp returns `None` before the first poll and `int >= 0` after;
         # `TodayCache.update` rejects negative inputs with ValueError, so a
@@ -285,7 +335,6 @@ class HoymilesEnvironmentalSensor(HoymilesPlantEntity, SensorEntity):
         if today_wh is None:
             return None
         today_kwh = today_wh / 1000.0
-        co2_factor, tree_factor = self._factors()
 
         if self.entity_description.key == "co2_savings_today":
             # kg CO2 saved = kWh * (kg CO2 / kWh)

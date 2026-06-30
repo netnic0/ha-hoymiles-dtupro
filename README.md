@@ -16,10 +16,11 @@
 Tested end-to-end against a real **DTU-Pro** with 7 **HMS-1000-2T** micro-inverters
 (14 panels — 6 Est, 8 Ouest) running firmware **V00.07.04**.
 
-Results: **8 devices · 118 entities** (1 plant device + 7 inverter sub-devices,
+Results: **8 devices · 120 entities** (1 plant device + 7 inverter sub-devices,
 each with 16 entities covering per-MPPT-port PV power, energy, voltage, current,
-temperature, grid data, alarm, RF link status, plus 2 plant-level environmental
-impact sensors — CO2 savings and equivalent young trees planted).
+temperature, grid data, alarm, RF link status, plus 4 plant-level environmental
+impact sensors — CO2 savings and equivalent young trees planted, both today and
+lifetime variants).
 
 ---
 
@@ -80,7 +81,7 @@ export so we can confirm and add it to the tested list.
 
 | Project | Transport | Async | Status |
 |---|---|---|---|
-| **`netnic0/ha-hoymiles-dtupro`** *(this repo)* | Modbus TCP (DTU-Pro wired gateway) | Yes — `pymodbus.AsyncModbusTcpClient` | **Stable v1.9.1 — Silver tier 🥈** — hardware validated |
+| **`netnic0/ha-hoymiles-dtupro`** *(this repo)* | Modbus TCP (DTU-Pro wired gateway) | Yes — `pymodbus.AsyncModbusTcpClient` | **Stable v1.9.4 — Silver tier 🥈** — hardware validated |
 | [`ArekKubacki/Hoymiles-Plant-DTU-Pro`][arek-url] | Modbus TCP (DTU-Pro wired gateway) | No — sync | Stable, MIT |
 | [`suaveolent/ha-hoymiles-wifi`][suav-url] | Protobuf TCP (HMS-WiFi inverters) | Yes | Stable, MIT |
 
@@ -160,6 +161,8 @@ The table below uses the **English** translation key names (locale `en`).
 | `sensor.<dtu>_total_production` | sensor | Plant lifetime (Wh, displayed as kWh, `state_class: total`) |
 | `sensor.<dtu>_co2_savings_today` | sensor | CO2 emissions avoided today (kg, `state_class: total_increasing`). Default factor matches the Hoymiles app; configurable via OptionsFlow. |
 | `sensor.<dtu>_equivalent_trees_planted_today` | sensor | Equivalent young trees planted today (fractional count, `state_class: total_increasing`). |
+| `sensor.<dtu>_co2_savings_lifetime` | sensor | CO2 emissions avoided since installation (kg, `state_class: total`). Derived from the plant lifetime energy; same configurable factor as today. |
+| `sensor.<dtu>_equivalent_trees_planted_lifetime` | sensor | Lifetime equivalent young trees planted (fractional count, `state_class: total`). |
 | `binary_sensor.<dtu>_alarm` | binary_sensor | Aggregated alarm flag |
 
 ### Per-inverter device (×N, one per detected inverter)
@@ -206,6 +209,11 @@ Over months this drifts.
 
 `today_production` was added precisely to feed the Energy dashboard with a
 clean `total_increasing` series. Use it.
+
+> Since **v1.9.4** the plant `today_production` is also protected against
+> single-poll RF-flap drops by an in-memory monotone clamp in the coordinator
+> (see [CHANGELOG](CHANGELOG.md)). If you upgraded from an earlier version and
+> had installed a Riemann-sum + utility_meter workaround, you can remove it.
 
 ### Do not force `state_class: total_increasing` on `total_production`
 
@@ -302,11 +310,14 @@ Released:
 - **v1.6.0** — OptionsFlow with 8 user-tunable knobs (scan intervals, retries, backoff, alert thresholds).
 - **v1.7.0** — mypy strict expanded to the full HA layer; Silver prerequisites (PARALLEL_UPDATES, reconfigure i18n, utility_meter doc).
 - **v1.8.0** — **Silver tier 🥈** reached (>=95% HA-layer coverage, 28 quality_scale rules).
-- **v1.9.0** — CO2 savings + equivalent young trees planted sensors with user-configurable factors. README refresh.
+- **v1.9.0** — CO2 savings + equivalent young trees planted sensors with user-configurable factors.
 - **v1.9.1** — Bug A fix: plant-level `total_production` deduplication by `serial_number` (was ×4–5 overcounting from MPPT-port replication of `total_wh`).
+- **v1.9.2 / v1.9.3** — README docs refresh: clarify which entity to use in the HA Energy dashboard; roadmap status pass.
+- **v1.9.4** — Bug B fix: `today_production` RF-flap clamp. The plant `today_production` (and the derived CO2/trees-today sensors) no longer drop when an inverter's RF link briefly flaps, which had been inflating HA Energy dashboard totals by 10–20×. New in-memory `TodayCache` in the coordinator clamps the value monotonically within the local day. **This is the recommended baseline for the HA Energy dashboard.**
 
 Forward-looking:
-- **Lifetime environmental sensors** — `co2_savings_lifetime` and `equivalent_trees_planted_lifetime` (unblocked by the v1.9.1 `total_production` dedup fix).
+- **Lifetime environmental sensors** *(this PR)* — `co2_savings_lifetime` and `equivalent_trees_planted_lifetime`, symmetric to the today variants but derived from `total_production` (dedup'd by serial since v1.9.1) with `state_class: total`. Ship in the next release.
+- **Per-port `today_production` resilience (Wave 2)** — when an inverter's RF link flaps, its two per-port `today_production` entities currently return their last raw value; planned to return `None` instead so HA marks them unavailable cleanly. Plant-level is already fixed via v1.9.4's `TodayCache`.
 - **Per-inverter power limit service** — implement the `set_inverter_limit` service handler (currently a skeleton — see `services.yaml`).
 - **Gold-tier candidate** — strict-typing of test code, full action-exception handling, accessibility audit.
 
