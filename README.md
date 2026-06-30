@@ -80,7 +80,7 @@ export so we can confirm and add it to the tested list.
 
 | Project | Transport | Async | Status |
 |---|---|---|---|
-| **`netnic0/ha-hoymiles-dtupro`** *(this repo)* | Modbus TCP (DTU-Pro wired gateway) | Yes — `pymodbus.AsyncModbusTcpClient` | **Stable v1.8.0 — Silver tier 🥈** — hardware validated |
+| **`netnic0/ha-hoymiles-dtupro`** *(this repo)* | Modbus TCP (DTU-Pro wired gateway) | Yes — `pymodbus.AsyncModbusTcpClient` | **Stable v1.9.1 — Silver tier 🥈** — hardware validated |
 | [`ArekKubacki/Hoymiles-Plant-DTU-Pro`][arek-url] | Modbus TCP (DTU-Pro wired gateway) | No — sync | Stable, MIT |
 | [`suaveolent/ha-hoymiles-wifi`][suav-url] | Protobuf TCP (HMS-WiFi inverters) | Yes | Stable, MIT |
 
@@ -302,11 +302,12 @@ Released:
 - **v1.6.0** — OptionsFlow with 8 user-tunable knobs (scan intervals, retries, backoff, alert thresholds).
 - **v1.7.0** — mypy strict expanded to the full HA layer; Silver prerequisites (PARALLEL_UPDATES, reconfigure i18n, utility_meter doc).
 - **v1.8.0** — **Silver tier 🥈** reached (>=95% HA-layer coverage, 28 quality_scale rules).
-- **v1.9.0** *(this PR)* — CO2 savings + equivalent young trees planted sensors with user-configurable factors. README refresh.
+- **v1.9.0** — CO2 savings + equivalent young trees planted sensors with user-configurable factors. README refresh.
+- **v1.9.1** — Bug A fix: plant-level `total_production` deduplication by `serial_number` (was ×4–5 overcounting from MPPT-port replication of `total_wh`).
 
 Forward-looking:
-- **Bug A fix** — investigate and correct the plant-level `total_production` aggregation (×4.35 vs Hoymiles app — see internal tracker). Lifetime CO2/trees sensors land alongside.
-- **Per-inverter power limit service** — implement the `set_inverter_limit` service handler (currently a placeholder).
+- **Lifetime environmental sensors** — `co2_savings_lifetime` and `equivalent_trees_planted_lifetime` (unblocked by the v1.9.1 `total_production` dedup fix).
+- **Per-inverter power limit service** — implement the `set_inverter_limit` service handler (currently a skeleton — see `services.yaml`).
 - **Gold-tier candidate** — strict-typing of test code, full action-exception handling, accessibility audit.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the actual release notes.
