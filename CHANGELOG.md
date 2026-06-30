@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.9.3](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.9.2...v1.9.3) (2026-06-30)
+
+
+### Documentation
+
+* **readme:** clarify HA Energy entity + refresh roadmap for v1.9.1 ([#30](https://github.com/netnic0/ha-hoymiles-dtupro/issues/30)) ([9adeedc](https://github.com/netnic0/ha-hoymiles-dtupro/commit/9adeedc1cdb62b5ee169184c6abdeb0bbf83a651))
+
 ## [1.9.2](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.9.1...v1.9.2) (2026-06-22)
 
 
