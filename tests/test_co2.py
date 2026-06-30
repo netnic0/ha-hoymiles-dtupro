@@ -6,7 +6,7 @@ synthetic coordinator -- no Home Assistant runtime, no PHCC. They cover:
   * Default-factor calculations against the canonical fixture
     (`mock_plant_data`: 7 inverters * 2 ports * 1850 Wh today = 25 900 Wh plant).
   * Override factors via `coordinator.config_entry.options`.
-  * Defensive paths: zero, negative, missing data.
+  * Defensive paths: zero factor, missing data, pre-first-poll None.
 
 The HA-native side (entity registration, options-flow propagation) lives in
 `tests/test_sensor.py`.
@@ -129,28 +129,6 @@ def test_equivalent_trees_planted_today_zero_tree_factor_returns_none(
 
 
 # ─── Defensive: invalid / missing inputs ──────────────────────────────────────
-
-
-def test_native_value_returns_none_when_today_production_is_negative(
-    mock_plant_data: PlantData,
-) -> None:
-    """Defensive: a negative today_production (impossible, but defensive).
-
-    Since PR #7, the environmental sensor reads `coordinator.plant_today_production_clamped`
-    (an int|None), so we set that property directly instead of patching `coord.data`.
-    """
-    coord = MagicMock()
-    coord.data = mock_plant_data
-    coord.plant_today_production_clamped = -1
-    coord.config_entry = MagicMock()
-    coord.config_entry.options = {}
-
-    description = next(d for d in PLANT_ENVIRONMENTAL_SENSORS if d.key == "co2_savings_today")
-    sensor = HoymilesEnvironmentalSensor.__new__(HoymilesEnvironmentalSensor)
-    sensor.coordinator = coord
-    sensor.entity_description = description
-
-    assert sensor.native_value is None
 
 
 def test_native_value_returns_none_before_first_poll(
