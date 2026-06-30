@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases are automated by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.9.4](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.9.3...v1.9.4) (2026-06-30)
+
+
+### Bug Fixes
+
+* clamp plant today_production against RF-flap drops (Wave 1) ([#31](https://github.com/netnic0/ha-hoymiles-dtupro/issues/31)) ([fca074e](https://github.com/netnic0/ha-hoymiles-dtupro/commit/fca074eaf4cf1d45829eb78f984d693f11a373ba))
+
 ## [1.9.3](https://github.com/netnic0/ha-hoymiles-dtupro/compare/v1.9.2...v1.9.3) (2026-06-30)
 
 
