@@ -16,7 +16,7 @@ introduced in PR #2 to detect prolonged unreachability.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import TYPE_CHECKING
 
 from homeassistant.helpers import issue_registry as ir
@@ -41,6 +41,19 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
+
+# Maximum plausible plant-level `today_production` increment between two
+# consecutive polls, in watt-hours. Used by `TodayCache` to reject obvious
+# glitches (e.g. uint16 overflow surfacing as 65535) without rejecting real
+# production bursts.
+#
+# Theoretical upper bound for a 7-inverter plant (HMS-1000-2T, two MPPTs of
+# up to ~550 W each) at a 10-minute poll interval:
+#     7 x 2 x 550 W x 600 s / 3600 = ~1.28 kWh
+# We use 10x margin over the realistic per-poll increment (~90 Wh at default
+# 60s cadence) to keep the cap defensive against bogus values while never
+# rejecting legitimate production. Module-private — not a user-tunable knob.
+_MAX_SINGLE_POLL_WH_INCREMENT: int = 1_000
 
 
 class HoymilesRealDataCoordinator(TimestampDataUpdateCoordinator[PlantData]):
@@ -221,3 +234,108 @@ class HoymilesMetadataCoordinator(TimestampDataUpdateCoordinator[PlantData]):
                 translation_key=ISSUE_ID_INVERTER_OFFLINE,
                 translation_placeholders={"serial": serial},
             )
+
+
+class TodayCache:
+    """Monotone in-memory cache for the plant-level `today_production` (Wh).
+
+    Why this exists
+    ---------------
+    The raw plant sum (`PlantData.today_production`) only includes inverters
+    whose `link_status` is currently True. When one inverter's RF link flaps
+    for a single poll cycle it disappears from `online_inverters`, the plant
+    sum drops, and recovers next cycle. With sub-minute polling on a 7-inverter
+    plant this happens 30-50x per day. Home Assistant's recorder treats each
+    drop on a `state_class=TOTAL_INCREASING` sensor as a counter reset and
+    credits the pre-drop delta to the cumulative — snowballing daily energy
+    by an order of magnitude in the Energy dashboard.
+
+    Contract
+    --------
+    `update(raw_wh, now=None)` returns a value that is:
+      * Monotone within the same local date — never decreases vs the previous
+        cached value, even if a transient RF flap drops the raw sum.
+      * Reset to the new raw reading on local-midnight rollover (uses
+        `dt_util.now()` so it honours the HA timezone, including DST).
+      * Glitch-resistant — increments larger than `_MAX_SINGLE_POLL_WH_INCREMENT`
+        are treated as bogus (e.g. uint16 overflow) and the previous cached
+        value is returned instead.
+
+    The cache is intentionally in-memory only: a fresh HA restart re-establishes
+    the baseline from the first successful poll. The DTU itself owns the
+    authoritative daily counter, so we never need to persist state.
+    """
+
+    def __init__(self) -> None:
+        self._value_wh: int | None = None
+        self._date: date | None = None
+
+    @property
+    def value(self) -> int | None:
+        """Last cached value in watt-hours, or None before the first update."""
+        return self._value_wh
+
+    @property
+    def cached_date(self) -> date | None:
+        """Local date the cached value belongs to, or None before first update."""
+        return self._date
+
+    def update(self, raw_wh: int, *, now: datetime | None = None) -> int:
+        """Feed a new raw plant reading and return the monotone-clamped value.
+
+        Parameters
+        ----------
+        raw_wh
+            Raw plant-level `today_production` in watt-hours (typically
+            `plant_data.today_production`). Must be a non-negative integer.
+        now
+            Optional override for "now" — used only by tests. Production code
+            should leave it as None so the cache reads `dt_util.now()` itself.
+
+        Returns
+        -------
+        int
+            The value the sensor should expose: monotone within the day,
+            reset at midnight, glitch-resistant.
+        """
+        if raw_wh < 0:
+            raise ValueError(f"raw_wh cannot be negative, got {raw_wh}")
+
+        moment = now if now is not None else dt_util.now()
+        today = moment.date()
+
+        # Midnight rollover (or first call ever) → trust the raw reading as the
+        # new baseline. We deliberately do NOT inherit yesterday's clamp because
+        # the DTU resets `today_wh` at its own local midnight.
+        if self._date != today or self._value_wh is None:
+            self._value_wh = raw_wh
+            self._date = today
+            return raw_wh
+
+        previous = self._value_wh
+
+        # Drop: RF-flap or transient exclusion of an inverter from the sum.
+        # Hold the previous (higher) value until the missing inverter returns.
+        if raw_wh < previous:
+            return previous
+
+        # Glitch: implausible single-poll jump. Treat as garbage and hold.
+        # Common cause: uint16 today_wh briefly surfaces with stale bits.
+        if raw_wh - previous > _MAX_SINGLE_POLL_WH_INCREMENT:
+            _LOGGER.warning(
+                "today_production jumped from %d Wh to %d Wh in one poll "
+                "(> %d Wh threshold) — holding previous value as a glitch guard",
+                previous,
+                raw_wh,
+                _MAX_SINGLE_POLL_WH_INCREMENT,
+            )
+            return previous
+
+        # Normal monotone progression.
+        self._value_wh = raw_wh
+        return raw_wh
+
+    def reset(self) -> None:
+        """Forget the cached value (used by tests; production rarely needs it)."""
+        self._value_wh = None
+        self._date = None
