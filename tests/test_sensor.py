@@ -79,6 +79,109 @@ def test_plant_sensor_native_value_pulls_from_coordinator(
     assert sensor.native_value == pytest.approx(expected)
 
 
+# --- PR #7 — Plant today_production routes through the RF-flap cache ---------
+
+
+def test_plant_today_production_sensor_reads_clamped_property(
+    mock_plant_data: PlantData,
+) -> None:
+    """`today_production` MUST read coordinator.plant_today_production_clamped.
+
+    A raw `getattr(data, "today_production", None)` would re-introduce the
+    RF-flap drops that PR #7 exists to suppress. The plant sensor must skip
+    the raw attribute path for this one key only.
+    """
+    coord = AsyncMock()
+    coord.data = mock_plant_data  # raw plant sum exists, but we IGNORE it
+    coord.plant_today_production_clamped = 42_000  # arbitrary distinct value
+
+    description = next(d for d in PLANT_SENSORS if d.key == "today_production")
+    sensor = HoymilesPlantSensor.__new__(HoymilesPlantSensor)
+    sensor.coordinator = coord
+    sensor.entity_description = description
+
+    # The clamped property wins over `data.today_production` (which would equal
+    # `mock_plant_data.today_production`, i.e. 25 900 Wh).
+    assert sensor.native_value == 42_000
+    assert sensor.native_value != mock_plant_data.today_production
+
+
+def test_plant_today_production_sensor_returns_none_before_first_poll(
+    mock_plant_data: PlantData,
+) -> None:
+    """Before the first poll the clamp property is None — sensor unavailable."""
+    coord = AsyncMock()
+    coord.data = mock_plant_data
+    coord.plant_today_production_clamped = None
+
+    description = next(d for d in PLANT_SENSORS if d.key == "today_production")
+    sensor = HoymilesPlantSensor.__new__(HoymilesPlantSensor)
+    sensor.coordinator = coord
+    sensor.entity_description = description
+
+    assert sensor.native_value is None
+
+
+def test_plant_today_production_holds_through_drop_and_recovery(
+    mock_plant_data: PlantData, mock_plant_data_one_offline: PlantData
+) -> None:
+    """End-to-end: simulate a real coordinator's RF-flap sequence at the sensor layer.
+
+    This drives the actual `HoymilesRealDataCoordinator` (not a MagicMock) through
+    three polls — high / drop / recover — and asserts the plant `today_production`
+    sensor reports a monotone value the whole way through.
+    """
+    from custom_components.hoymiles_dtupro.coordinator import HoymilesRealDataCoordinator
+
+    # The coordinator constructor needs a `hass` — but `async_refresh` is what
+    # actually exercises hass internals; for native_value we only need
+    # `coordinator.plant_today_production_clamped` so we drive `_async_update_data`
+    # directly via `_today_cache.update(...)` instead, simulating successful polls.
+    coord = HoymilesRealDataCoordinator.__new__(HoymilesRealDataCoordinator)
+    # Mirror what __init__ would set, minus HA-runtime attributes.
+    from custom_components.hoymiles_dtupro.coordinator import TodayCache
+
+    coord._today_cache = TodayCache()
+
+    description = next(d for d in PLANT_SENSORS if d.key == "today_production")
+    sensor = HoymilesPlantSensor.__new__(HoymilesPlantSensor)
+    sensor.coordinator = coord
+    sensor.entity_description = description
+
+    # Cycle 1 — all inverters online.
+    coord._today_cache.update(mock_plant_data.today_production)
+    high = mock_plant_data.today_production
+    assert sensor.native_value == high
+
+    # Cycle 2 — one inverter's RF flaps offline.
+    coord._today_cache.update(mock_plant_data_one_offline.today_production)
+    # Sensor still publishes the higher pre-flap value (the whole point of PR #7).
+    assert sensor.native_value == high
+
+    # Cycle 3 — recovery.
+    coord._today_cache.update(mock_plant_data.today_production)
+    assert sensor.native_value == high
+
+
+def test_plant_pv_power_still_reads_raw_data(mock_plant_data: PlantData) -> None:
+    """The clamp routing is `today_production`-only — other plant keys are unchanged.
+
+    Regression guard against an over-broad refactor that would clamp `pv_power`
+    or `total_production` (both are out of scope for PR #7).
+    """
+    coord = AsyncMock()
+    coord.data = mock_plant_data
+    coord.plant_today_production_clamped = 999_999  # would be wrong for pv_power
+
+    description = next(d for d in PLANT_SENSORS if d.key == "pv_power")
+    sensor = HoymilesPlantSensor.__new__(HoymilesPlantSensor)
+    sensor.coordinator = coord
+    sensor.entity_description = description
+
+    expected = sum(inv.pv_power for inv in mock_plant_data.inverters if inv.link_status)
+    assert sensor.native_value == pytest.approx(expected)
+
+
 def test_inverter_sensor_reads_port1(
     mock_plant_data: PlantData, mock_inverter_serials: list[str]
 ) -> None:

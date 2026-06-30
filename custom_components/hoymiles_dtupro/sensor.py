@@ -201,6 +201,12 @@ PORT_SENSORS: tuple[SensorEntityDescription, ...] = (
 class HoymilesPlantSensor(HoymilesPlantEntity, SensorEntity):
     """A plant-level numeric sensor aggregated across all online inverters."""
 
+    # Narrow `coordinator` from the base class's RealData|Metadata union to the
+    # real-data coordinator only — these sensors are always instantiated with
+    # the real-data coordinator (see `async_setup_entry`). This is a pure type
+    # annotation; no runtime cost. Required for mypy to resolve the
+    # `plant_today_production_clamped` access on this coordinator subtype.
+    coordinator: HoymilesRealDataCoordinator
     entity_description: SensorEntityDescription
 
     def __init__(
@@ -213,6 +219,14 @@ class HoymilesPlantSensor(HoymilesPlantEntity, SensorEntity):
 
     @property
     def native_value(self) -> float | int | None:
+        # `today_production` MUST be read through the coordinator's RF-flap cache,
+        # NOT from `data.today_production`. The raw plant sum drops every time an
+        # inverter's RF link flaps, and HA's recorder reads each drop on a
+        # state_class=TOTAL_INCREASING sensor as a counter reset — inflating the
+        # Energy dashboard by 10-20x. See `TodayCache` in coordinator.py. All
+        # other plant keys (pv_power, total_production) remain safe direct reads.
+        if self.entity_description.key == "today_production":
+            return self.coordinator.plant_today_production_clamped
         data: PlantData = self.coordinator.data
         return getattr(data, self.entity_description.key, None)
 
@@ -232,6 +246,8 @@ class HoymilesEnvironmentalSensor(HoymilesPlantEntity, SensorEntity):
     once Bug A is resolved.
     """
 
+    # Same coordinator-type narrowing as `HoymilesPlantSensor` (PR #7).
+    coordinator: HoymilesRealDataCoordinator
     entity_description: SensorEntityDescription
 
     def __init__(
@@ -258,8 +274,11 @@ class HoymilesEnvironmentalSensor(HoymilesPlantEntity, SensorEntity):
     @property
     def native_value(self) -> float | None:
         """Compute the sensor value from `today_production` and the factors."""
-        data: PlantData = self.coordinator.data
-        today_wh = data.today_production
+        # Read the RF-flap-clamped plant value via the coordinator. Falling back
+        # to `data.today_production` would re-introduce the drops the cache
+        # exists to suppress (CO2 and trees-today are TOTAL_INCREASING and feed
+        # the Energy dashboard's daily figures through utility_meter cycles).
+        today_wh = self.coordinator.plant_today_production_clamped
         if today_wh is None or today_wh < 0:
             return None
         today_kwh = today_wh / 1000.0

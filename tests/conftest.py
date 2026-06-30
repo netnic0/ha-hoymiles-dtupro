@@ -150,6 +150,29 @@ def mock_plant_data(mock_dtu_serial: str, mock_inverter_serials: list[str]) -> P
 
 
 @pytest.fixture
+def mock_plant_data_one_offline(
+    mock_dtu_serial: str, mock_inverter_serials: list[str]
+) -> PlantData:
+    """Plant snapshot identical to `mock_plant_data` but the first inverter is offline.
+
+    Both MPPT ports of the first serial have `link_status=False`. The plant
+    sums (`today_production`, `pv_power`) drop by 1/7 of the original — this
+    is the canonical "RF flap drops one inverter from `online_inverters`"
+    scenario that PR #7 is built around.
+    """
+    readings = []
+    for idx, sn in enumerate(mock_inverter_serials):
+        offline = idx == 0
+        readings.append(_build_inverter_reading(sn, port=1, link=not offline))
+        readings.append(_build_inverter_reading(sn, port=2, link=not offline))
+    return PlantData(
+        dtu_serial=mock_dtu_serial,
+        fetched_at=datetime(2026, 6, 4, 12, 1, 0, tzinfo=UTC),
+        inverters=tuple(readings),
+    )
+
+
+@pytest.fixture
 def mock_config_entry_data(mock_dtu_serial: str) -> dict[str, object]:
     """Default config entry payload for the Hoymiles DTU-Pro integration.
 

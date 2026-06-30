@@ -250,3 +250,90 @@ async def test_metadata_coordinator_default_threshold_preserved(
     coord = HoymilesMetadataCoordinator(hass, client, entry_id="test_entry")
 
     assert coord._inverter_offline_threshold == ISSUE_INVERTER_OFFLINE_THRESHOLD
+
+
+# --- PR #7 — TodayCache integration ------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_plant_today_production_clamped_is_none_before_first_poll(
+    hass: HomeAssistant,
+) -> None:
+    """The exposed property is None until the coordinator has polled at least once."""
+    client = AsyncMock(spec=HoymilesAsyncClient)
+    coord = HoymilesRealDataCoordinator(hass, client, entry_id="test_entry", host="192.0.2.1")
+
+    assert coord.plant_today_production_clamped is None
+
+
+@pytest.mark.asyncio
+async def test_plant_today_production_clamped_tracks_raw_on_first_poll(
+    hass: HomeAssistant, mock_plant_data: PlantData
+) -> None:
+    """First successful poll seeds the cache with the raw plant sum."""
+    client = AsyncMock(spec=HoymilesAsyncClient)
+    client.async_get_plant_data = AsyncMock(return_value=mock_plant_data)
+
+    coord = HoymilesRealDataCoordinator(hass, client, entry_id="test_entry", host="192.0.2.1")
+    await coord.async_refresh()
+
+    assert coord.plant_today_production_clamped == mock_plant_data.today_production
+
+
+@pytest.mark.asyncio
+async def test_plant_today_production_clamped_holds_through_rf_flap(
+    hass: HomeAssistant,
+    mock_plant_data: PlantData,
+    mock_plant_data_one_offline: PlantData,
+) -> None:
+    """The canonical RF-flap scenario: high → drop → recover. Cache holds across drop.
+
+    Without the cache, HA's recorder would credit the (high - drop) delta to
+    `today` on the recovery cycle, inflating the cumulative by an order of
+    magnitude over a day with 30-50 such flaps. The clamped value must remain
+    monotone.
+    """
+    client = AsyncMock(spec=HoymilesAsyncClient)
+    coord = HoymilesRealDataCoordinator(hass, client, entry_id="test_entry", host="192.0.2.1")
+
+    # Cycle 1 — all inverters online.
+    client.async_get_plant_data = AsyncMock(return_value=mock_plant_data)
+    await coord.async_refresh()
+    high = mock_plant_data.today_production
+    assert high > 0  # sanity — fixture produces a non-trivial sum
+    assert coord.plant_today_production_clamped == high
+
+    # Cycle 2 — one inverter's RF link flaps (offline this poll only). Raw sum drops.
+    client.async_get_plant_data = AsyncMock(return_value=mock_plant_data_one_offline)
+    await coord.async_refresh()
+    drop = mock_plant_data_one_offline.today_production
+    assert drop < high  # sanity — fixture genuinely excludes the offline inverter
+    # The cache must NOT decrease — published value stays at `high`.
+    assert coord.plant_today_production_clamped == high
+
+    # Cycle 3 — inverter rejoins, raw catches up to `high` again.
+    client.async_get_plant_data = AsyncMock(return_value=mock_plant_data)
+    await coord.async_refresh()
+    assert coord.plant_today_production_clamped == high
+
+
+@pytest.mark.asyncio
+async def test_today_cache_not_fed_on_failed_poll(
+    hass: HomeAssistant, mock_plant_data: PlantData
+) -> None:
+    """A HoymilesError must NOT seed the cache (no data, no update)."""
+    from homeassistant.helpers.update_coordinator import UpdateFailed
+
+    client = AsyncMock(spec=HoymilesAsyncClient)
+    coord = HoymilesRealDataCoordinator(hass, client, entry_id="test_entry", host="192.0.2.1")
+
+    client.async_get_plant_data = AsyncMock(side_effect=HoymilesConnectionError("nope"))
+    with pytest.raises(UpdateFailed):
+        await coord._async_update_data()
+
+    assert coord.plant_today_production_clamped is None
+
+    # First successful poll afterward establishes the baseline normally.
+    client.async_get_plant_data = AsyncMock(return_value=mock_plant_data)
+    await coord.async_refresh()
+    assert coord.plant_today_production_clamped == mock_plant_data.today_production
