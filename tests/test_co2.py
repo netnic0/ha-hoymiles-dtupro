@@ -42,6 +42,11 @@ def _build_sensor(
     """Wire a HoymilesEnvironmentalSensor without going through HA's setup."""
     coord = MagicMock()
     coord.data = coord_data
+    # PR #7: the environmental sensor reads the RF-flap-clamped value via the
+    # coordinator's `plant_today_production_clamped` property, not directly off
+    # `data.today_production`. Mirror the raw plant sum here so the existing
+    # arithmetic-based tests keep their reference values.
+    coord.plant_today_production_clamped = coord_data.today_production
     coord.config_entry = MagicMock()
     coord.config_entry.options = options
 
@@ -129,14 +134,32 @@ def test_equivalent_trees_planted_today_zero_tree_factor_returns_none(
 def test_native_value_returns_none_when_today_production_is_negative(
     mock_plant_data: PlantData,
 ) -> None:
-    """Defensive: a negative today_production (impossible, but defensive)."""
+    """Defensive: a negative today_production (impossible, but defensive).
+
+    Since PR #7, the environmental sensor reads `coordinator.plant_today_production_clamped`
+    (an int|None), so we set that property directly instead of patching `coord.data`.
+    """
     coord = MagicMock()
+    coord.data = mock_plant_data
+    coord.plant_today_production_clamped = -1
+    coord.config_entry = MagicMock()
+    coord.config_entry.options = {}
 
-    # Patch the data so today_production becomes a negative int via a stub.
-    class _BadPlant:
-        today_production = -1
+    description = next(d for d in PLANT_ENVIRONMENTAL_SENSORS if d.key == "co2_savings_today")
+    sensor = HoymilesEnvironmentalSensor.__new__(HoymilesEnvironmentalSensor)
+    sensor.coordinator = coord
+    sensor.entity_description = description
 
-    coord.data = _BadPlant()
+    assert sensor.native_value is None
+
+
+def test_native_value_returns_none_before_first_poll(
+    mock_plant_data: PlantData,
+) -> None:
+    """Before the first successful poll the clamped property is None — sensor unavailable."""
+    coord = MagicMock()
+    coord.data = mock_plant_data
+    coord.plant_today_production_clamped = None
     coord.config_entry = MagicMock()
     coord.config_entry.options = {}
 
@@ -154,6 +177,63 @@ def test_factors_helper_returns_defaults_when_options_empty(mock_plant_data: Pla
     co2, tree = sensor._factors()
     assert co2 == DEFAULT_CO2_FACTOR_KG_PER_KWH
     assert tree == DEFAULT_TREE_KG_CO2_PER_YEAR
+
+
+# ─── PR #7 — Environmental sensors must use the clamped value, not data.today_production ───
+
+
+def test_co2_uses_clamped_value_not_raw_plant_data(mock_plant_data: PlantData) -> None:
+    """CO2 must derive from the clamped property even when raw plant sum has dropped.
+
+    Without this routing, an RF-flap-induced drop in `data.today_production` would
+    surface in the CO2 sensor as a TOTAL_INCREASING drop — exactly the bug PR #7
+    fixes for `today_production` itself.
+    """
+    coord = MagicMock()
+    coord.data = mock_plant_data  # raw = 25.9 kWh
+    # Simulate a post-flap snapshot: raw is low, cache holds the pre-flap value.
+    coord.plant_today_production_clamped = mock_plant_data.today_production
+    coord.config_entry = MagicMock()
+    coord.config_entry.options = {}
+
+    description = next(d for d in PLANT_ENVIRONMENTAL_SENSORS if d.key == "co2_savings_today")
+    sensor = HoymilesEnvironmentalSensor.__new__(HoymilesEnvironmentalSensor)
+    sensor.coordinator = coord
+    sensor.entity_description = description
+
+    # Now force the raw plant sum to a drastically lower value AFTER the sensor
+    # is wired — the cached property is the only source of truth.
+    class _PostFlapPlant:
+        today_production = 5_000  # raw dropped to 5 kWh (e.g. half inverters offline)
+
+    coord.data = _PostFlapPlant()
+
+    # Sensor still reports the pre-flap CO2 (12.95 kg), NOT a value derived from 5 kWh.
+    assert sensor.native_value == pytest.approx(12.95)
+
+
+def test_trees_uses_clamped_value_not_raw_plant_data(mock_plant_data: PlantData) -> None:
+    """Same routing check as above, applied to the trees-equivalent sensor."""
+    coord = MagicMock()
+    coord.data = mock_plant_data
+    coord.plant_today_production_clamped = mock_plant_data.today_production
+    coord.config_entry = MagicMock()
+    coord.config_entry.options = {}
+
+    description = next(
+        d for d in PLANT_ENVIRONMENTAL_SENSORS if d.key == "equivalent_trees_planted_today"
+    )
+    sensor = HoymilesEnvironmentalSensor.__new__(HoymilesEnvironmentalSensor)
+    sensor.coordinator = coord
+    sensor.entity_description = description
+
+    class _PostFlapPlant:
+        today_production = 5_000
+
+    coord.data = _PostFlapPlant()
+
+    # 25.9 kWh * 0.5 = 12.95 kg ; 12.95 / 25 = 0.518 -> 0.52 trees (pre-flap).
+    assert sensor.native_value == pytest.approx(0.52)
 
 
 # ─── Descriptor-level assertions (lock down attributes) ───────────────────────
